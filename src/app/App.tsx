@@ -14,10 +14,13 @@ import {
   UtensilsCrossed,
   UserRound,
   LockKeyhole,
+  Settings,
+  Sun,
+  Moon,
+  Contrast,
 } from "lucide-react";
 
 // ── MD3 Color System ─────────────────────────────────────────────────────
-// Tonal palette derived from green primary #1E7A45 (P-40)
 const C = {
   primary: "var(--md-primary)",
   onPrimary: "var(--md-on-primary)",
@@ -52,9 +55,9 @@ const C = {
 
 // ── MD3 Elevation ─────────────────────────────────────────────────────────
 const elev = {
-  1: "0 1px 2px rgba(25,29,25,0.14), 0 1px 3px 1px rgba(25,29,25,0.08)",
-  2: "0 2px 6px rgba(25,29,25,0.16), 0 1px 2px rgba(25,29,25,0.10)",
-  3: "0 8px 20px rgba(25,29,25,0.18), 0 2px 6px rgba(25,29,25,0.10)",
+  1: "0 1px 2px var(--md-shadow-color), 0 1px 3px var(--md-shadow-color)",
+  2: "0 2px 6px var(--md-shadow-color), 0 1px 2px var(--md-shadow-color)",
+  3: "0 8px 20px var(--md-shadow-color), 0 2px 6px var(--md-shadow-color)",
 } as const;
 
 // ── MD3 Type Scale ────────────────────────────────────────────────────────
@@ -81,9 +84,11 @@ type Screen =
   | "foodDetail"
   | "confirmation"
   | "progress"
-  | "mealDetail";
+  | "mealDetail"
+  | "settings";
 type MealName = "Café da manhã" | "Almoço" | "Jantar" | "Lanche";
-type NavTab = "home" | "register" | "progress";
+type NavTab = "home" | "register" | "progress" | "settings";
+type ThemeMode = "light" | "dark";
 
 interface Profile {
   name: string;
@@ -350,7 +355,7 @@ function MacroBar({
 }
 
 // ── MD3 Navigation Bar ────────────────────────────────────────────────────
-// Compact primary navigation with three real top-level destinations.
+// Compact primary navigation with four real top-level destinations.
 function NavigationBar({
   active,
   onNavigate,
@@ -372,6 +377,12 @@ function NavigationBar({
       screen: "search",
     },
     { id: "progress", Icon: Calculator, label: "Cálculo", screen: "progress" },
+    {
+      id: "settings",
+      Icon: Settings,
+      label: "Configurações",
+      screen: "settings",
+    },
   ];
   return (
     <nav
@@ -726,6 +737,20 @@ function SegmentedButton({
 
 // ── App ───────────────────────────────────────────────────────────────────
 export default function App() {
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const savedTheme = localStorage.getItem("nutri-theme");
+    const legacyAppearance = localStorage.getItem("nutri-appearance");
+    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
+    return legacyAppearance === "dark" ? "dark" : "light";
+  });
+  const [highContrast, setHighContrast] = useState(() => {
+    const savedContrast = localStorage.getItem("nutri-high-contrast");
+    const legacyAppearance = localStorage.getItem("nutri-appearance");
+    if (savedContrast === "true" || savedContrast === "false") {
+      return savedContrast === "true";
+    }
+    return legacyAppearance === "high-contrast";
+  });
   const [profile, setProfile] = useState<Profile | null>(() => {
     const saved = localStorage.getItem("nutri-profile");
     return saved ? JSON.parse(saved) : null;
@@ -750,13 +775,12 @@ export default function App() {
   });
 
   useEffect(() => {
-    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
-    const syncTheme = () =>
-      document.documentElement.classList.toggle("dark", colorScheme.matches);
-    syncTheme();
-    colorScheme.addEventListener("change", syncTheme);
-    return () => colorScheme.removeEventListener("change", syncTheme);
-  }, []);
+    document.documentElement.classList.remove("high-contrast", "light", "dark");
+    document.documentElement.classList.add(themeMode);
+    if (highContrast) document.documentElement.classList.add("high-contrast");
+    localStorage.setItem("nutri-theme", themeMode);
+    localStorage.setItem("nutri-high-contrast", String(highContrast));
+  }, [themeMode, highContrast]);
 
   useEffect(() => {
     if (profile) localStorage.setItem("nutri-profile", JSON.stringify(profile));
@@ -1493,7 +1517,7 @@ export default function App() {
               <div
                 key={label}
                 className="rounded-[8px] py-2.5 px-1"
-                style={{ backgroundColor: "rgba(255,255,255,0.55)" }}
+                style={{ backgroundColor: C.surfaceContainerLow }}
               >
                 <p
                   className={`${T.labelSmall}`}
@@ -1946,6 +1970,131 @@ export default function App() {
     </div>
   );
 
+  // ── Screen: Settings ─────────────────────────────────────────────────
+  const SettingsScreen = (
+    <div className="flex h-full flex-col overflow-y-auto px-4 py-6">
+      <header className="mb-6 px-1">
+        <p className={`${T.bodyMedium}`} style={{ color: C.onSurfaceVariant }}>
+          Preferências do app
+        </p>
+        <h2
+          className={`${T.headlineSmall} mt-1`}
+          style={{ color: C.onSurface }}
+        >
+          Configurações
+        </h2>
+      </header>
+
+      <div
+        className="mb-6 flex items-center gap-3 rounded-[24px] p-4"
+        style={{ backgroundColor: C.surfaceContainerLow }}
+      >
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-full"
+          style={{ backgroundColor: C.primaryContainer }}
+        >
+          <UserRound size={22} style={{ color: C.onPrimaryContainer }} />
+        </div>
+        <div className="min-w-0">
+          <p
+            className={`${T.titleMedium} truncate`}
+            style={{ color: C.onSurface }}
+          >
+            {profile?.name || "Seu perfil"}
+          </p>
+          <p className={`${T.bodySmall}`} style={{ color: C.onSurfaceVariant }}>
+            Preferências pessoais
+          </p>
+        </div>
+      </div>
+
+      <section aria-labelledby="appearance-heading">
+        <p
+          id="appearance-heading"
+          className={`${T.labelMedium} mb-2 px-1 uppercase tracking-widest`}
+          style={{ color: C.onSurfaceVariant }}
+        >
+          Aparência
+        </p>
+        <div
+          className="grid grid-cols-2 gap-2 rounded-[24px] p-2"
+          style={{ backgroundColor: C.surfaceContainerLow }}
+          role="radiogroup"
+          aria-label="Tema de cores"
+        >
+          {(
+            [
+              ["light", "Claro", Sun],
+              ["dark", "Escuro", Moon],
+            ] as const
+          ).map(([mode, label, Icon]) => {
+            const selected = themeMode === mode;
+            return (
+              <button
+                key={mode}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setThemeMode(mode)}
+                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-[18px] px-2 text-center transition-all"
+                style={{
+                  backgroundColor: selected
+                    ? C.primaryContainer
+                    : "transparent",
+                  color: selected ? C.onPrimaryContainer : C.onSurfaceVariant,
+                }}
+              >
+                <Icon size={22} strokeWidth={selected ? 2.4 : 1.8} />
+                <span className={T.labelSmall}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div
+          className="mt-3 flex items-center justify-between rounded-[20px] p-4"
+          style={{ backgroundColor: C.surfaceContainerLow }}
+        >
+          <div className="flex items-center gap-3">
+            <Contrast size={22} style={{ color: C.onSurfaceVariant }} />
+            <div>
+              <p className={`${T.titleSmall}`} style={{ color: C.onSurface }}>
+                Alto contraste
+              </p>
+              <p
+                className={`${T.bodySmall}`}
+                style={{ color: C.onSurfaceVariant }}
+              >
+                Mais diferenciação entre texto e superfícies
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={highContrast}
+            aria-label="Alto contraste"
+            onClick={() => setHighContrast((enabled) => !enabled)}
+            className="relative h-8 w-14 rounded-full border transition-colors"
+            style={{
+              backgroundColor: highContrast ? C.primary : C.surfaceVariant,
+              borderColor: highContrast ? C.primary : C.outline,
+            }}
+          >
+            <span
+              className="absolute top-1 h-6 w-6 rounded-full transition-transform"
+              style={{
+                left: highContrast ? "calc(100% - 28px)" : "4px",
+                backgroundColor: highContrast
+                  ? C.onPrimary
+                  : C.onSurfaceVariant,
+              }}
+            />
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+
   // ── Screens map ───────────────────────────────────────────────────────
   const screens: Record<Screen, React.ReactElement> = {
     onboarding: Onboarding,
@@ -1955,6 +2104,7 @@ export default function App() {
     confirmation: Confirmation,
     progress: Progress,
     mealDetail: MealDetail,
+    settings: SettingsScreen,
   };
 
   return (
