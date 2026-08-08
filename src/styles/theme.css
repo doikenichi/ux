@@ -1,0 +1,288 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* MD3 tonal palette — green primary #1E7A45 (P-40) */
+  --md-primary:               #1E7A45;
+  --md-on-primary:            #FFFFFF;
+  --md-primary-container:     #ADFAC7;
+  --md-on-primary-container:  #002112;
+  --md-secondary:             #4D6B54;
+  --md-on-secondary:          #FFFFFF;
+  --md-secondary-container:   #CFF3D6;
+  --md-on-secondary-container:#0B2113;
+  --md-tertiary:              #7A5700;
+  --md-on-tertiary:           #FFFFFF;
+  --md-tertiary-container:    #FFE08C;
+  --md-on-tertiary-container: #261A00;
+  --md-error:                 #B3261E;
+  --md-on-error:              #FFFFFF;
+  --md-error-container:       #F9DEDC;
+  --md-on-error-container:    #410002;
+  --md-surface-lowest:        #FFFFFF;
+  --md-surface:               #F6FBF8;
+  --md-surface-container-low: #F0FAF3;
+  --md-surface-container:     #EAF4ED;
+  --md-surface-container-high:#E4EEE7;
+  --md-surface-container-highest:#DFEFE1;
+  --md-surface-variant:       #DCE5DA;
+  --md-on-surface:            #191D19;
+  --md-on-surface-variant:    #404943;
+  --md-outline:               #707973;
+  --md-outline-variant:       #BFC9BA;
+  --md-scrim:                 #000000;
+  --md-inverse-surface:       #2E312E;
+  --md-inverse-on-surface:    #EEF2EC;
+  --md-inverse-primary:       #91D7A8;
+
+  /* M3 Expressive shape and motion tokens */
+  --md-shape-extra-small: 4px;
+  --md-shape-small: 8px;
+  --md-shape-medium: 12px;
+  --md-shape-large: 20px;
+  --md-shape-extra-large: 32px;
+  --md-motion-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-motion-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Tailwind token contract — mapped to MD3 roles */
+  --font-size: 16px;
+  --background: var(--md-surface);
+  --foreground: var(--md-on-surface);
+  --card: var(--md-surface-container-low);
+  --card-foreground: var(--md-on-surface);
+  --popover: var(--md-surface-lowest);
+  --popover-foreground: var(--md-on-surface);
+  --primary: var(--md-primary);
+  --primary-foreground: var(--md-on-primary);
+  --secondary: var(--md-secondary-container);
+  --secondary-foreground: var(--md-on-secondary-container);
+  --muted: var(--md-surface-variant);
+  --muted-foreground: var(--md-on-surface-variant);
+  --accent: var(--md-tertiary-container);
+  --accent-foreground: var(--md-on-tertiary-container);
+  --destructive: var(--md-error);
+  --destructive-foreground: var(--md-on-error);
+  --border: var(--md-outline-variant);
+  --input: transparent;
+  --input-background: var(--md-surface-container);
+  --switch-background: var(--md-outline);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: var(--md-primary);
+  --chart-1: #1E7A45;
+  --chart-2: #E8650A;
+  --chart-3: #F59E0B;
+  --chart-4: #2EA357;
+  --chart-5: #6BCB8B;
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --md-primary: #91D7A8;
+  --md-on-primary: #00391D;
+  --md-primary-container: #00522C;
+  --md-on-primary-container: #ADFAC7;
+  --md-secondary: #B3CCB8;
+  --md-on-secondary: #203528;
+  --md-secondary-container: #364B3D;
+  --md-on-secondary-container: #CFF3D6;
+  --md-tertiary: #F4C550;
+  --md-on-tertiary: #402D00;
+  --md-tertiary-container: #5C4200;
+  --md-on-tertiary-container: #FFE08C;
+  --md-error: #FFB4AB;
+  --md-on-error: #690005;
+  --md-error-container: #93000A;
+  --md-on-error-container: #FFDAD6;
+  --md-surface-lowest: #0C0F0C;
+  --md-surface: #101410;
+  --md-surface-container-low: #191D19;
+  --md-surface-container: #1D211D;
+  --md-surface-container-high: #272B27;
+  --md-surface-container-highest: #323632;
+  --md-surface-variant: #404943;
+  --md-on-surface: #E1E3DE;
+  --md-on-surface-variant: #BFC9C0;
+  --md-outline: #89938B;
+  --md-outline-variant: #404943;
+  --background: var(--md-surface);
+  --foreground: var(--md-on-surface);
+  --card: var(--md-surface-container-low);
+  --card-foreground: var(--md-on-surface);
+  --popover: var(--md-surface-container);
+  --popover-foreground: var(--md-on-surface);
+  --primary: var(--md-primary);
+  --primary-foreground: var(--md-on-primary);
+  --secondary: var(--md-secondary-container);
+  --secondary-foreground: var(--md-on-secondary-container);
+  --muted: var(--md-surface-variant);
+  --muted-foreground: var(--md-on-surface-variant);
+  --accent: var(--md-tertiary-container);
+  --accent-foreground: var(--md-on-tertiary-container);
+  --destructive: var(--md-error);
+  --destructive-foreground: var(--md-on-error);
+  --border: var(--md-outline-variant);
+  --input: transparent;
+  --input-background: var(--md-surface-container);
+  --switch-background: var(--md-outline);
+  --ring: var(--md-primary);
+  --chart-1: #91D7A8;
+  --chart-2: #FFB86B;
+  --chart-3: #F4C550;
+  --chart-4: #74D394;
+  --chart-5: #CFF3D6;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    font-family: "Roboto Flex", Roboto, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
+  }
+
+  button, input {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 3px solid var(--md-primary);
+    outline-offset: 2px;
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

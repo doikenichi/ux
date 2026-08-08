@@ -1,0 +1,196 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 900" font-family="'Comic Sans MS','Segoe Print',cursive">
+  <defs>
+    <style>
+      .ph{fill:none;stroke:#2b2b2b;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#555;stroke-width:1.6;stroke-linecap:round}
+      .fillg{fill:#e9edf7;stroke:#2b2b2b;stroke-width:2}
+      .fillp{fill:#f6dfe6;stroke:#2b2b2b;stroke-width:2}
+      .txt{font-size:13px;fill:#2b2b2b}
+      .sm{font-size:11px;fill:#555}
+      .tag{font-size:12px;fill:#c0325c;font-weight:bold}
+      .cap{font-size:15px;fill:#1f3a93;font-weight:bold}
+      .note{font-size:10.5px;fill:#777;font-style:italic}
+      .hand{font-size:12px;fill:#333}
+    </style>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6" fill="none" stroke="#c0325c" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <text x="30" y="34" font-size="22" fill="#1f3a93" font-weight="bold">Sketch — Alimentação Saudável (baixa fidelidade)</text>
+  <text x="30" y="54" class="note">Rascunho exploratório. Não representa cores nem dimensões finais — serve para discutir o fluxo antes do Figma.</text>
+
+  <!-- ============ FILA 1: TAREFA 1 ============ -->
+  <text x="30" y="90" class="tag">TAREFA 1 · REGISTRAR REFEIÇÃO</text>
+
+  <!-- ---- Tela 1.1 Dashboard ---- -->
+  <g transform="translate(30,100)">
+    <rect x="0" y="0" width="230" height="330" rx="16" class="ph"/>
+    <text x="14" y="26" class="hand">Olá, Rodrigo 👋</text>
+    <rect x="14" y="36" width="130" height="20" rx="6" class="fillg"/>
+    <text x="20" y="51" class="sm">◄  Qui, 14 ago  ►</text>
+    <!-- anel resumo -->
+    <circle cx="115" cy="120" r="42" class="thin"/>
+    <path d="M115,78 a42,42 0 0 1 36,63" fill="none" stroke="#1f3a93" stroke-width="6"/>
+    <text x="92" y="118" class="sm">1850</text>
+    <text x="90" y="132" class="sm">/2000 kcal</text>
+    <!-- botão principal -->
+    <rect x="30" y="185" width="170" height="40" rx="10" class="fillp"/>
+    <text x="62" y="210" class="hand">+ Registrar refeição</text>
+    <!-- atalhos -->
+    <text x="14" y="250" class="sm">café · almoço · jantar · lanche</text>
+    <rect x="14" y="260" width="202" height="16" rx="4" class="thin"/>
+    <rect x="14" y="282" width="202" height="16" rx="4" class="thin"/>
+    <!-- bottom nav -->
+    <line x1="0" y1="300" x2="230" y2="300" class="thin"/>
+    <text x="18" y="318" class="sm">◉ Início</text>
+    <text x="80" y="318" class="sm">＋Reg</text>
+    <text x="132" y="318" class="sm">Progr</text>
+    <text x="185" y="318" class="sm">Perfil</text>
+    <text x="0" y="352" class="cap">1.1 Início / Dashboard</text>
+    <text x="0" y="368" class="note">data visível = Location no tempo</text>
+    <text x="0" y="381" class="note">botão grande = ação principal (Rodrigo)</text>
+  </g>
+  <line x1="266" y1="265" x2="292" y2="265" stroke="#c0325c" stroke-width="1.6" marker-end="url(#arr)"/>
+
+  <!-- ---- Tela 1.2 Buscar ---- -->
+  <g transform="translate(300,100)">
+    <rect x="0" y="0" width="230" height="330" rx="16" class="ph"/>
+    <text x="14" y="26" class="hand">◄ Buscar alimento</text>
+    <rect x="14" y="38" width="202" height="26" rx="13" class="fillg"/>
+    <text x="24" y="55" class="sm">🔍 arr...</text>
+    <text x="14" y="86" class="sm">Resultados</text>
+    <rect x="14" y="94" width="202" height="24" rx="5" class="thin"/>
+    <text x="22" y="110" class="sm">Arroz cozido — 130 kcal</text>
+    <rect x="14" y="122" width="202" height="24" rx="5" class="thin"/>
+    <text x="22" y="138" class="sm">Arroz integral — 110 kcal</text>
+    <text x="14" y="170" class="sm">Recentes ⭐</text>
+    <rect x="14" y="178" width="202" height="22" rx="5" class="thin"/>
+    <rect x="14" y="204" width="202" height="22" rx="5" class="thin"/>
+    <line x1="0" y1="300" x2="230" y2="300" class="thin"/>
+    <text x="18" y="318" class="sm">Início</text>
+    <text x="80" y="318" class="sm">◉Reg</text>
+    <text x="132" y="318" class="sm">Progr</text>
+    <text x="185" y="318" class="sm">Perfil</text>
+    <text x="0" y="352" class="cap">1.2 Buscar alimento</text>
+    <text x="0" y="368" class="note">busca instantânea + recentes</text>
+    <text x="0" y="381" class="note">Indication · diretriz "Busca"</text>
+  </g>
+  <line x1="536" y1="265" x2="562" y2="265" stroke="#c0325c" stroke-width="1.6" marker-end="url(#arr)"/>
+
+  <!-- ---- Tela 1.3 Detalhe ---- -->
+  <g transform="translate(570,100)">
+    <rect x="0" y="0" width="230" height="330" rx="16" class="ph"/>
+    <text x="14" y="26" class="hand">◄ Arroz cozido</text>
+    <text x="14" y="60" class="sm">Quantidade / porção</text>
+    <rect x="14" y="68" width="120" height="26" rx="6" class="fillg"/>
+    <text x="24" y="85" class="sm">– 100 g +</text>
+    <text x="14" y="118" class="sm">Refeição</text>
+    <rect x="14" y="126" width="150" height="24" rx="6" class="thin"/>
+    <text x="24" y="142" class="sm">Almoço ▾</text>
+    <!-- info nutricional destacada -->
+    <rect x="14" y="164" width="202" height="60" rx="8" class="fillp"/>
+    <text x="24" y="184" class="sm">130 kcal · C 28g</text>
+    <text x="24" y="202" class="sm">P 2.7g · G 0.3g</text>
+    <rect x="40" y="240" width="150" height="34" rx="9" class="fillg"/>
+    <text x="80" y="262" class="hand">Adicionar</text>
+    <line x1="0" y1="300" x2="230" y2="300" class="thin"/>
+    <text x="0" y="352" class="cap">1.3 Detalhe / porção</text>
+    <text x="0" y="368" class="note">porção certa = progresso certo</text>
+    <text x="0" y="381" class="note">Colour destaca info nutricional</text>
+  </g>
+  <line x1="806" y1="265" x2="832" y2="265" stroke="#c0325c" stroke-width="1.6" marker-end="url(#arr)"/>
+
+  <!-- ---- Tela 1.4 Confirmação ---- -->
+  <g transform="translate(840,100)">
+    <rect x="0" y="0" width="230" height="330" rx="16" class="ph"/>
+    <circle cx="115" cy="80" r="26" class="fillg"/>
+    <path d="M104,80 l8,8 l16,-18" fill="none" stroke="#1f3a93" stroke-width="3.5"/>
+    <text x="60" y="130" class="hand">Refeição registrada!</text>
+    <!-- total atualizando -->
+    <rect x="30" y="150" width="170" height="44" rx="8" class="fillp"/>
+    <text x="46" y="170" class="sm">Total de hoje</text>
+    <text x="46" y="187" class="sm">1980 / 2000 kcal ▲</text>
+    <rect x="30" y="212" width="170" height="30" rx="8" class="thin"/>
+    <text x="58" y="232" class="sm">Registrar outro</text>
+    <rect x="30" y="250" width="170" height="30" rx="8" class="thin"/>
+    <text x="62" y="270" class="sm">Voltar ao início</text>
+    <line x1="0" y1="300" x2="230" y2="300" class="thin"/>
+    <text x="0" y="352" class="cap">1.4 Confirmação</text>
+    <text x="0" y="368" class="note">feedback fecha o ciclo</text>
+    <text x="0" y="381" class="note">padrão Busy</text>
+  </g>
+
+  <!-- ============ FILA 2: TAREFA 2 ============ -->
+  <text x="30" y="500" class="tag">TAREFA 2 · VER PROGRESSO</text>
+
+  <!-- ---- Tela 2.1 Progresso ---- -->
+  <g transform="translate(30,510)">
+    <rect x="0" y="0" width="230" height="330" rx="16" class="ph"/>
+    <text x="14" y="26" class="hand">Progresso</text>
+    <rect x="60" y="34" width="110" height="22" rx="6" class="fillg"/>
+    <text x="70" y="50" class="sm">◄ Hoje ►</text>
+    <!-- anel grande -->
+    <circle cx="115" cy="120" r="48" class="thin"/>
+    <path d="M115,72 a48,48 0 1 1 -30,86" fill="none" stroke="#1f3a93" stroke-width="7"/>
+    <text x="86" y="118" class="sm">1980 kcal</text>
+    <text x="92" y="133" class="sm">de 2000</text>
+    <!-- barras macros -->
+    <text x="14" y="196" class="sm">Proteína</text>
+    <rect x="80" y="186" width="136" height="12" rx="6" class="thin"/>
+    <rect x="80" y="186" width="90" height="12" rx="6" class="fillp"/>
+    <text x="14" y="216" class="sm">Carbo</text>
+    <rect x="80" y="206" width="136" height="12" rx="6" class="thin"/>
+    <rect x="80" y="206" width="120" height="12" rx="6" class="fillp"/>
+    <text x="14" y="236" class="sm">Gordura</text>
+    <rect x="80" y="226" width="136" height="12" rx="6" class="thin"/>
+    <rect x="80" y="226" width="60" height="12" rx="6" class="fillp"/>
+    <text x="14" y="262" class="sm">Refeições do dia ▾</text>
+    <rect x="14" y="270" width="202" height="18" rx="4" class="thin"/>
+    <line x1="0" y1="300" x2="230" y2="300" class="thin"/>
+    <text x="132" y="318" class="sm">◉Progr</text>
+    <text x="0" y="352" class="cap">2.1 Progresso diário</text>
+    <text x="0" y="368" class="note">anel = resposta num relance (Dona Célia)</text>
+    <text x="0" y="381" class="note">setas de data = Location</text>
+  </g>
+  <line x1="266" y1="675" x2="292" y2="675" stroke="#c0325c" stroke-width="1.6" marker-end="url(#arr)"/>
+
+  <!-- ---- Tela 2.2 Detalhe refeição ---- -->
+  <g transform="translate(300,510)">
+    <rect x="0" y="0" width="230" height="330" rx="16" class="ph"/>
+    <text x="14" y="24" class="sm">Progresso ＞ Almoço</text>
+    <line x1="14" y1="30" x2="120" y2="30" stroke="#c0325c" stroke-width="1.2" stroke-dasharray="3,3"/>
+    <text x="14" y="54" class="hand">Almoço</text>
+    <rect x="14" y="64" width="202" height="30" rx="6" class="thin"/>
+    <text x="22" y="83" class="sm">Arroz cozido 100g — 130</text>
+    <rect x="14" y="98" width="202" height="30" rx="6" class="thin"/>
+    <text x="22" y="117" class="sm">Frango grelhado 120g — 200</text>
+    <rect x="14" y="132" width="202" height="30" rx="6" class="thin"/>
+    <text x="22" y="151" class="sm">Salada — 40</text>
+    <line x1="14" y1="176" x2="216" y2="176" class="thin"/>
+    <text x="14" y="196" class="sm">Total: 370 kcal</text>
+    <rect x="14" y="212" width="96" height="28" rx="7" class="fillg"/>
+    <text x="34" y="231" class="sm">✎ Editar</text>
+    <rect x="120" y="212" width="96" height="28" rx="7" class="thin"/>
+    <text x="140" y="231" class="sm">🗑 Remover</text>
+    <line x1="0" y1="300" x2="230" y2="300" class="thin"/>
+    <text x="132" y="318" class="sm">◉Progr</text>
+    <text x="0" y="352" class="cap">2.2 Detalhe da refeição</text>
+    <text x="0" y="368" class="note">separado = respeita memória de trabalho</text>
+    <text x="0" y="381" class="note">breadcrumb = Location</text>
+  </g>
+
+  <!-- legenda -->
+  <g transform="translate(600,540)">
+    <rect x="0" y="0" width="480" height="150" rx="12" fill="#fafbff" stroke="#d5dbec" stroke-width="1.5"/>
+    <text x="20" y="28" class="cap">Como ler este sketch</text>
+    <rect x="20" y="42" width="26" height="16" rx="4" class="fillp"/>
+    <text x="56" y="55" class="txt">elemento com destaque (padrão Colour aplicado)</text>
+    <rect x="20" y="66" width="26" height="16" rx="4" class="fillg"/>
+    <text x="56" y="79" class="txt">campo / botão interativo</text>
+    <line x1="20" y1="98" x2="46" y2="98" stroke="#c0325c" stroke-width="1.6" marker-end="url(#arr)"/>
+    <text x="56" y="102" class="txt">fluxo de navegação entre telas</text>
+    <text x="20" y="128" class="note">Próximo passo: refinar no Figma em média fidelidade (cores, tipografia, ícones reais).</text>
+    <text x="20" y="143" class="note">Nada aqui é definitivo — é o momento de mudar o que não fizer sentido.</text>
+  </g>
+</svg>
