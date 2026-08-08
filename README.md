@@ -1,8 +1,20 @@
-# Prototipagem de ideia - Trabalho de UX UFSCar
+# Prototipagem de ideia - Trabalho de UX - UFSCar
+
+Atividade em grupo · 2ª semana · Tema: Alimentação Saudável.
 
 Protótipo mobile de acompanhamento alimentar. Permite registrar refeições e visualizar estimativas de calorias e macronutrientes a partir das informações do perfil.
 
 O projeto original está disponível no [Figma](https://www.figma.com/design/Wp0lQHsm4h5PrPFFkZsbn3/Prototipagem-de-ideia).
+
+## Membros da Equipe
+
+- Aline Ribeiro Braga
+- Claudio Yaitiro Sakamoto
+- Erik Kaue de Oliveira Silva
+- Enrico Sola Lopes
+- Fabio Colatto
+- Franco Doi
+- Rafael Luis Albano
 
 ## Recursos
 
