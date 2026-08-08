@@ -1,4 +1,4 @@
-# Prototipagem de ideia
+# Prototipagem de ideia - Trabalho de UX UFSCar
 
 Protótipo mobile de acompanhamento alimentar. Permite registrar refeições e visualizar estimativas de calorias e macronutrientes a partir das informações do perfil.
 
