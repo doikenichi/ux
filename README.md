@@ -60,3 +60,5 @@ npm run build
 - Não há histórico alimentar real por data; as médias e os cálculos exibidos são estimativas.
 - A meta calórica não substitui orientação de profissional de saúde ou nutrição.
 - As diretrizes de UX foram aplicadas visualmente, mas ainda requerem auditoria de acessibilidade e testes com usuários em dispositivos reais.
+
+teste
