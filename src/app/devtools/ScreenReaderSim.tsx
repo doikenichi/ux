@@ -295,23 +295,86 @@ function loadVoices() {
   voices = window.speechSynthesis.getVoices();
 }
 
-function pickVoice(): SpeechSynthesisVoice | undefined {
+const VOICE_KEY = "sr-sim-voice-settings";
+
+export type VoiceSettings = {
+  name: string;
+  rate: number;
+  pitch: number;
+  volume: number;
+};
+
+const DEFAULT_SETTINGS: VoiceSettings = {
+  name: "",
+  rate: 1.05,
+  pitch: 1,
+  volume: 1,
+};
+
+function loadSettings(): VoiceSettings {
+  try {
+    const raw = localStorage.getItem(VOICE_KEY);
+    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    /* storage bloqueado ou JSON inválido */
+  }
+  return DEFAULT_SETTINGS;
+}
+
+function saveSettings(s: VoiceSettings) {
+  try {
+    localStorage.setItem(VOICE_KEY, JSON.stringify(s));
+  } catch {
+    /* escolha vale só nesta sessão */
+  }
+}
+
+/**
+ * Todas as vozes, com as em português primeiro e, dentro delas, as locais
+ * antes das de rede — a ordem em que aparecem no seletor.
+ */
+function sortedVoices(): SpeechSynthesisVoice[] {
+  const score = (v: SpeechSynthesisVoice) =>
+    (/^pt[-_]BR/i.test(v.lang) ? 0 : /^pt/i.test(v.lang) ? 1 : 2) * 2 +
+    (v.localService ? 0 : 1);
+  return [...voices].sort((a, b) => score(a) - score(b));
+}
+
+/**
+ * Voz escolhida pelo usuário (lembrada entre sessões) ou o melhor padrão.
+ *
+ * O padrão prefere voz pt-BR **local** (instalada no sistema) à voz de rede:
+ * o Chrome expõe vozes próprias do Google além das do Windows, e a primeira
+ * da lista costuma ser uma voz masculina do Google. Voz local também continua
+ * funcionando sem internet — relevante numa apresentação.
+ */
+function pickVoice(preferredName?: string): SpeechSynthesisVoice | undefined {
+  if (preferredName) {
+    const chosen = voices.find((v) => v.name === preferredName);
+    if (chosen) return chosen;
+  }
+  const ptBR = voices.filter((v) => /^pt[-_]BR/i.test(v.lang));
+  const pt = voices.filter((v) => /^pt/i.test(v.lang));
   return (
-    voices.find((v) => /^pt[-_]BR/i.test(v.lang)) ||
-    voices.find((v) => /^pt/i.test(v.lang))
+    ptBR.find((v) => v.localService) ||
+    ptBR[0] ||
+    pt.find((v) => v.localService) ||
+    pt[0]
   );
 }
 
 /** Fala em pt-BR, cancelando o que estiver sendo dito (como um leitor real). */
-function speak(text: string) {
+function speak(text: string, s: VoiceSettings) {
   if (!text || !("speechSynthesis" in window)) return;
   const synth = window.speechSynthesis;
   synth.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "pt-BR";
-  u.rate = 1.05;
-  const pt = pickVoice();
-  if (pt) u.voice = pt;
+  u.rate = s.rate;
+  u.pitch = s.pitch;
+  u.volume = s.volume;
+  const v = pickVoice(s.name);
+  if (v) u.voice = v;
   synth.speak(u);
 }
 
@@ -337,6 +400,50 @@ function announceableFrom(el: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
+/** Controle deslizante do painel. Fora da ordem de tabulação do protótipo. */
+function Slider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  format,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  format: (n: number) => string;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <span style={{ color: "#94a3b8" }}>{label}</span>
+      <input
+        type="range"
+        tabIndex={-1}
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: 92, accentColor: "#4ade80" }}
+      />
+      <b
+        style={{
+          color: "#e2e8f0",
+          minWidth: 44,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {format(value)}
+      </b>
+    </label>
+  );
+}
+
 // ── Componente ────────────────────────────────────────────────────────────
 export default function ScreenReaderSim() {
   if (typeof window === "undefined") return null;
@@ -351,7 +458,23 @@ function Sim() {
   const [visible, setVisible] = useState(true);
   const [voiceOn, setVoiceOn] = useState(true);
   const [primed, setPrimed] = useState(false);
-  const [voiceName, setVoiceName] = useState("");
+  const [settings, setSettings] = useState<VoiceSettings>(DEFAULT_SETTINGS);
+  const [voiceList, setVoiceList] = useState<SpeechSynthesisVoice[]>([]);
+  const settingsRef = useRef(DEFAULT_SETTINGS);
+  settingsRef.current = settings;
+
+  /** Altera um ajuste, persiste e demonstra o resultado em voz. */
+  const updateSetting = <K extends keyof VoiceSettings>(
+    key: K,
+    value: VoiceSettings[K],
+    sample: string,
+  ) => {
+    const next = { ...settingsRef.current, [key]: value };
+    settingsRef.current = next;
+    setSettings(next);
+    saveSettings(next);
+    speak(sample, next);
+  };
   const [log, setLog] = useState<Announcement[]>([]);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const targetRef = useRef<HTMLElement | null>(null);
@@ -364,14 +487,18 @@ function Sim() {
   /** Único caminho de anúncio: legenda + voz. */
   const announce = (a: Announcement) => {
     push(a);
-    if (voiceOnRef.current) speak(a.phrase);
+    if (voiceOnRef.current) speak(a.phrase, settingsRef.current);
   };
 
   // Vozes carregam de forma assíncrona no Chrome.
   useEffect(() => {
     const sync = () => {
       loadVoices();
-      setVoiceName(pickVoice()?.name || "");
+      setVoiceList(sortedVoices());
+      const saved = loadSettings();
+      const resolved = { ...saved, name: pickVoice(saved.name)?.name || "" };
+      settingsRef.current = resolved;
+      setSettings(resolved);
     };
     sync();
     window.speechSynthesis?.addEventListener("voiceschanged", sync);
@@ -714,14 +841,92 @@ function Sim() {
                 </b>
               ) : (
                 <b style={{ color: green }}>
-                  🔊 voz ligada{voiceName ? ` · ${voiceName}` : " · voz padrão"}
+                  🔊 voz ligada
                 </b>
               )}
               {"  ·  "}
               Passe o mouse ou use Tab. Simulação didática — confira com
               NVDA/Narrator.
             </span>
-            <span>Ctrl+Alt+S voz · Ctrl+Alt+A oculta · Ctrl+Alt+↓/↑ percorre</span>
+            <span style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+              Ctrl+Alt+S voz · Ctrl+Alt+A oculta · Ctrl+Alt+↓/↑ percorre
+            </span>
+          </div>
+
+          {/* Controles da voz. tabIndex={-1} em tudo, para não entrarem na
+              ordem de tabulação que está sendo demonstrada. */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 14,
+              padding: "8px 10px",
+              marginBottom: 8,
+              borderRadius: 6,
+              background: "#111a24",
+              border: "1px solid #1e293b",
+              fontSize: 12,
+              pointerEvents: "auto",
+            }}
+          >
+            <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: "#94a3b8" }}>Voz</span>
+              <select
+                tabIndex={-1}
+                value={settings.name}
+                onChange={(e) =>
+                  updateSetting("name", e.target.value, "Voz alterada.")
+                }
+                style={{
+                  background: "#1e293b",
+                  color: "#e2e8f0",
+                  border: "1px solid #334155",
+                  borderRadius: 5,
+                  padding: "4px 6px",
+                  font: "inherit",
+                  maxWidth: 260,
+                }}
+              >
+                {voiceList.length === 0 && <option value="">(carregando)</option>}
+                {voiceList.map((v) => (
+                  <option key={v.name} value={v.name}>
+                    {v.name} — {v.lang}
+                    {v.localService ? " · local" : " · rede"}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <Slider
+              label="Velocidade"
+              value={settings.rate}
+              min={0.5}
+              max={3}
+              step={0.05}
+              format={(n) => `${n.toFixed(2)}×`}
+              onChange={(n) =>
+                updateSetting("rate", n, "Esta é a velocidade da leitura.")
+              }
+            />
+            <Slider
+              label="Tom"
+              value={settings.pitch}
+              min={0}
+              max={2}
+              step={0.1}
+              format={(n) => n.toFixed(1)}
+              onChange={(n) => updateSetting("pitch", n, "Este é o tom da voz.")}
+            />
+            <Slider
+              label="Volume"
+              value={settings.volume}
+              min={0}
+              max={1}
+              step={0.05}
+              format={(n) => `${Math.round(n * 100)}%`}
+              onChange={(n) => updateSetting("volume", n, "Este é o volume.")}
+            />
           </div>
 
           {current ? (
