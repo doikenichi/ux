@@ -18,11 +18,13 @@ async function expectNoAxeViolations(container: HTMLElement) {
 async function renderDashboard() {
   localStorage.setItem("nutri-profile", JSON.stringify(SAVED_PROFILE));
   const result = render(<App />);
-  expect(await screen.findByRole("heading", { level: 1, name: /Olá, Ana/ })).toBeVisible();
+  expect(
+    await screen.findByRole("heading", { level: 1, name: /Olá, Ana/ }),
+  ).toBeVisible();
   return result;
 }
 
-describe("acessibilidade WCAG do NutriDia", () => {
+describe("acessibilidade WCAG do ComiTora", () => {
   beforeEach(() => {
     localStorage.clear();
   });
@@ -34,7 +36,9 @@ describe("acessibilidade WCAG do NutriDia", () => {
   it("expõe o onboarding sem violações axe e identifica os campos opcionais", async () => {
     const { container } = render(<App />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Comece pelo seu perfil" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Comece pelo seu perfil" }),
+    ).toBeVisible();
     expect(screen.getByLabelText(/E-mail.*opcional/)).not.toBeRequired();
     expect(screen.getByLabelText(/Senha.*opcional/)).not.toBeRequired();
     await expectNoAxeViolations(container);
@@ -44,12 +48,16 @@ describe("acessibilidade WCAG do NutriDia", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Entrar e continuar" }));
+    await user.click(
+      screen.getByRole("button", { name: "Entrar e continuar" }),
+    );
 
     const nameInput = screen.getByLabelText(/^Seu nome/);
     expect(nameInput).toHaveAttribute("aria-invalid", "true");
     expect(nameInput).toHaveFocus();
-    expect(screen.getByText("Informe seu nome para continuar.")).toHaveAttribute("role", "alert");
+    expect(
+      screen.getByText("Informe seu nome para continuar."),
+    ).toHaveAttribute("role", "alert");
   });
 
   it("atualiza o título e direciona o foco ao título ao mudar de tela", async () => {
@@ -58,9 +66,12 @@ describe("acessibilidade WCAG do NutriDia", () => {
 
     await user.click(screen.getByRole("button", { name: "Registrar" }));
 
-    const title = await screen.findByRole("heading", { level: 1, name: "Buscar alimento" });
+    const title = await screen.findByRole("heading", {
+      level: 1,
+      name: "Buscar alimento",
+    });
     expect(title).toHaveFocus();
-    expect(document.title).toBe("Buscar alimento | NutriDia");
+    expect(document.title).toBe("Buscar alimento | ComiTora");
   });
 
   it("mantém painel, busca, detalhe e confirmação sem violações axe", async () => {
@@ -79,8 +90,12 @@ describe("acessibilidade WCAG do NutriDia", () => {
     await user.click(screen.getByRole("button", { name: /Banana/ }));
     await expectNoAxeViolations(container);
 
-    await user.click(screen.getByRole("button", { name: "Adicionar à refeição" }));
-    expect(await screen.findByRole("heading", { level: 1, name: "Registrado!" })).toBeVisible();
+    await user.click(
+      screen.getByRole("button", { name: "Adicionar à refeição" }),
+    );
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Registrado!" }),
+    ).toBeVisible();
     await expectNoAxeViolations(container);
   });
 
@@ -88,16 +103,24 @@ describe("acessibilidade WCAG do NutriDia", () => {
     const user = userEvent.setup();
     const { container } = await renderDashboard();
 
-    const navigation = screen.getByRole("navigation", { name: "Navegação principal" });
-    await user.click(within(navigation).getByRole("button", { name: "Cálculo" }));
+    const navigation = screen.getByRole("navigation", {
+      name: "Navegação principal",
+    });
+    await user.click(
+      within(navigation).getByRole("button", { name: "Cálculo" }),
+    );
     await expectNoAxeViolations(container);
 
     await user.click(screen.getByRole("button", { name: /Almoço 3 itens/ }));
     await expectNoAxeViolations(container);
 
-    await user.click(within(navigation).getByRole("button", { name: "Configurações" }));
+    await user.click(
+      within(navigation).getByRole("button", { name: "Configurações" }),
+    );
     expect(screen.getByRole("radio", { name: "Tema claro" })).toBeChecked();
-    expect(screen.getByRole("checkbox", { name: "Alto contraste" })).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Alto contraste" }),
+    ).not.toBeChecked();
     await expectNoAxeViolations(container);
   });
 });

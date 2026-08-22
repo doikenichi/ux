@@ -796,8 +796,9 @@ export default function App() {
   );
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [announcement, setAnnouncement] = useState("");
-  const [onboardingErrors, setOnboardingErrors] =
-    useState<OnboardingErrors>({});
+  const [onboardingErrors, setOnboardingErrors] = useState<OnboardingErrors>(
+    {},
+  );
   const [draftProfile, setDraftProfile] = useState<Profile>({
     name: "",
     height: 170,
@@ -822,7 +823,7 @@ export default function App() {
   }, [remindersEnabled]);
 
   useEffect(() => {
-    document.title = `${SCREEN_TITLES[screen]} | NutriDia`;
+    document.title = `${SCREEN_TITLES[screen]} | ComiTora`;
     if (previousScreenRef.current !== null) {
       mainRef.current?.querySelector<HTMLElement>("h1")?.focus();
     }
@@ -1068,11 +1069,16 @@ export default function App() {
               required
               aria-label="Seu nome"
               aria-invalid={Boolean(onboardingErrors.name)}
-              aria-describedby={onboardingErrors.name ? "profile-name-error" : undefined}
+              aria-describedby={
+                onboardingErrors.name ? "profile-name-error" : undefined
+              }
               value={draftProfile.name}
               onChange={(e) => {
                 setDraftProfile((p) => ({ ...p, name: e.target.value }));
-                setOnboardingErrors((current) => ({ ...current, name: undefined }));
+                setOnboardingErrors((current) => ({
+                  ...current,
+                  name: undefined,
+                }));
               }}
               placeholder="Como podemos chamar você?"
               className={`h-14 flex-1 bg-transparent outline-none ${T.bodyLarge}`}
@@ -1138,116 +1144,139 @@ export default function App() {
         style={{ backgroundColor: C.outlineVariant }}
       />
       <fieldset>
-        <legend className={`${T.titleMedium} mb-3`} style={{ color: C.onSurface }}>
+        <legend
+          className={`${T.titleMedium} mb-3`}
+          style={{ color: C.onSurface }}
+        >
           Sobre você
         </legend>
-      <div className="grid grid-cols-2 profile-measures gap-3">
-        <label htmlFor="profile-height">
+        <div className="grid grid-cols-2 profile-measures gap-3">
+          <label htmlFor="profile-height">
+            <span
+              className={`${T.labelMedium} mb-1 block`}
+              style={{ color: C.onSurfaceVariant }}
+            >
+              Altura (cm)
+            </span>
+            <input
+              id="profile-height"
+              name="height"
+              type="number"
+              min="1"
+              step="0.1"
+              inputMode="decimal"
+              required
+              aria-label="Altura em centímetros"
+              aria-invalid={Boolean(onboardingErrors.height)}
+              aria-describedby={
+                onboardingErrors.height ? "profile-height-error" : undefined
+              }
+              value={draftProfile.height}
+              onChange={(e) => {
+                setDraftProfile((p) => ({
+                  ...p,
+                  height: Number(e.target.value),
+                }));
+                setOnboardingErrors((current) => ({
+                  ...current,
+                  height: undefined,
+                }));
+              }}
+              className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
+              style={{
+                backgroundColor: C.surfaceContainerHighest,
+                color: C.onSurface,
+              }}
+            />
+            {onboardingErrors.height && (
+              <span
+                id="profile-height-error"
+                className="form-error"
+                role="alert"
+              >
+                {onboardingErrors.height}
+              </span>
+            )}
+          </label>
+          <label htmlFor="profile-weight">
+            <span
+              className={`${T.labelMedium} mb-1 block`}
+              style={{ color: C.onSurfaceVariant }}
+            >
+              Peso (kg)
+            </span>
+            <input
+              id="profile-weight"
+              name="weight"
+              type="number"
+              min="1"
+              step="0.1"
+              inputMode="decimal"
+              required
+              aria-label="Peso em quilos"
+              aria-invalid={Boolean(onboardingErrors.weight)}
+              aria-describedby={
+                onboardingErrors.weight ? "profile-weight-error" : undefined
+              }
+              value={draftProfile.weight}
+              onChange={(e) => {
+                setDraftProfile((p) => ({
+                  ...p,
+                  weight: Number(e.target.value),
+                }));
+                setOnboardingErrors((current) => ({
+                  ...current,
+                  weight: undefined,
+                }));
+              }}
+              className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
+              style={{
+                backgroundColor: C.surfaceContainerHighest,
+                color: C.onSurface,
+              }}
+            />
+            {onboardingErrors.weight && (
+              <span
+                id="profile-weight-error"
+                className="form-error"
+                role="alert"
+              >
+                {onboardingErrors.weight}
+              </span>
+            )}
+          </label>
+        </div>
+        <label className="mt-3 block" htmlFor="profile-sex">
           <span
             className={`${T.labelMedium} mb-1 block`}
             style={{ color: C.onSurfaceVariant }}
           >
-            Altura (cm)
+            Sexo
           </span>
-          <input
-            id="profile-height"
-            name="height"
-            type="number"
-            min="1"
-            step="0.1"
-            inputMode="decimal"
-            required
-            aria-label="Altura em centímetros"
-            aria-invalid={Boolean(onboardingErrors.height)}
-            aria-describedby={onboardingErrors.height ? "profile-height-error" : undefined}
-            value={draftProfile.height}
-            onChange={(e) => {
-              setDraftProfile((p) => ({ ...p, height: Number(e.target.value) }));
-              setOnboardingErrors((current) => ({ ...current, height: undefined }));
-            }}
+          <select
+            id="profile-sex"
+            name="sex"
+            value={draftProfile.sex}
+            onChange={(e) =>
+              setDraftProfile((p) => ({
+                ...p,
+                sex: e.target.value as Profile["sex"],
+              }))
+            }
             className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
             style={{
               backgroundColor: C.surfaceContainerHighest,
               color: C.onSurface,
             }}
-          />
-          {onboardingErrors.height && (
-            <span id="profile-height-error" className="form-error" role="alert">
-              {onboardingErrors.height}
-            </span>
-          )}
-        </label>
-        <label htmlFor="profile-weight">
-          <span
-            className={`${T.labelMedium} mb-1 block`}
-            style={{ color: C.onSurfaceVariant }}
           >
-            Peso (kg)
-          </span>
-          <input
-            id="profile-weight"
-            name="weight"
-            type="number"
-            min="1"
-            step="0.1"
-            inputMode="decimal"
-            required
-            aria-label="Peso em quilos"
-            aria-invalid={Boolean(onboardingErrors.weight)}
-            aria-describedby={onboardingErrors.weight ? "profile-weight-error" : undefined}
-            value={draftProfile.weight}
-            onChange={(e) => {
-              setDraftProfile((p) => ({ ...p, weight: Number(e.target.value) }));
-              setOnboardingErrors((current) => ({ ...current, weight: undefined }));
-            }}
-            className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
-            style={{
-              backgroundColor: C.surfaceContainerHighest,
-              color: C.onSurface,
-            }}
-          />
-          {onboardingErrors.weight && (
-            <span id="profile-weight-error" className="form-error" role="alert">
-              {onboardingErrors.weight}
-            </span>
-          )}
+            <option>Feminino</option>
+            <option>Masculino</option>
+            <option>Outro</option>
+          </select>
         </label>
-      </div>
-      <label className="mt-3 block" htmlFor="profile-sex">
-        <span
-          className={`${T.labelMedium} mb-1 block`}
-          style={{ color: C.onSurfaceVariant }}
-        >
-          Sexo
-        </span>
-        <select
-          id="profile-sex"
-          name="sex"
-          value={draftProfile.sex}
-          onChange={(e) =>
-            setDraftProfile((p) => ({
-              ...p,
-              sex: e.target.value as Profile["sex"],
-            }))
-          }
-          className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
-          style={{
-            backgroundColor: C.surfaceContainerHighest,
-            color: C.onSurface,
-          }}
-        >
-          <option>Feminino</option>
-          <option>Masculino</option>
-          <option>Outro</option>
-        </select>
-      </label>
       </fieldset>
       <div className="mt-auto pt-6">
-        <FilledButton
-          type="submit"
-          fullWidth
-          icon={<Check size={20} />}
-        >
+        <FilledButton type="submit" fullWidth icon={<Check size={20} />}>
           Entrar e continuar
         </FilledButton>
       </div>
@@ -1359,24 +1388,24 @@ export default function App() {
                 onChange={(event) => setRemindersEnabled(event.target.checked)}
               />
               <span
-              aria-hidden="true"
-              className="relative block h-8 w-14 rounded-full border transition-colors"
-              style={{
-                backgroundColor: remindersEnabled
-                  ? C.primary
-                  : C.surfaceVariant,
-                borderColor: remindersEnabled ? C.primary : C.outline,
-              }}
-            >
-              <span
-                className="absolute top-1 h-6 w-6 rounded-full transition-all"
+                aria-hidden="true"
+                className="relative block h-8 w-14 rounded-full border transition-colors"
                 style={{
-                  left: remindersEnabled ? 28 : 4,
                   backgroundColor: remindersEnabled
-                    ? C.onPrimary
-                    : C.onSurfaceVariant,
+                    ? C.primary
+                    : C.surfaceVariant,
+                  borderColor: remindersEnabled ? C.primary : C.outline,
                 }}
-              />
+              >
+                <span
+                  className="absolute top-1 h-6 w-6 rounded-full transition-all"
+                  style={{
+                    left: remindersEnabled ? 28 : 4,
+                    backgroundColor: remindersEnabled
+                      ? C.onPrimary
+                      : C.onSurfaceVariant,
+                  }}
+                />
               </span>
             </label>
           </div>
@@ -1579,7 +1608,12 @@ export default function App() {
         >
           Exemplo: arroz, banana ou frango.
         </p>
-        <p id="food-search-status" className="sr-only" role="status" aria-live="polite">
+        <p
+          id="food-search-status"
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+        >
           {query
             ? filtered.length === 0
               ? "Nenhum alimento encontrado."
@@ -2372,7 +2406,11 @@ export default function App() {
                   checked={selected}
                   onChange={() => setThemeMode(mode)}
                 />
-                <Icon aria-hidden="true" size={22} strokeWidth={selected ? 2.4 : 1.8} />
+                <Icon
+                  aria-hidden="true"
+                  size={22}
+                  strokeWidth={selected ? 2.4 : 1.8}
+                />
                 <span className={T.labelSmall}>{label}</span>
               </label>
             );
@@ -2404,22 +2442,22 @@ export default function App() {
               onChange={(event) => setHighContrast(event.target.checked)}
             />
             <span
-            aria-hidden="true"
-            className="relative block h-8 w-14 rounded-full border transition-colors"
-            style={{
-              backgroundColor: highContrast ? C.primary : C.surfaceVariant,
-              borderColor: highContrast ? C.primary : C.outline,
-            }}
-          >
-            <span
-              className="absolute top-1 h-6 w-6 rounded-full transition-transform"
+              aria-hidden="true"
+              className="relative block h-8 w-14 rounded-full border transition-colors"
               style={{
-                left: highContrast ? "calc(100% - 28px)" : "4px",
-                backgroundColor: highContrast
-                  ? C.onPrimary
-                  : C.onSurfaceVariant,
+                backgroundColor: highContrast ? C.primary : C.surfaceVariant,
+                borderColor: highContrast ? C.primary : C.outline,
               }}
-            />
+            >
+              <span
+                className="absolute top-1 h-6 w-6 rounded-full transition-transform"
+                style={{
+                  left: highContrast ? "calc(100% - 28px)" : "4px",
+                  backgroundColor: highContrast
+                    ? C.onPrimary
+                    : C.onSurfaceVariant,
+                }}
+              />
             </span>
           </label>
         </div>
@@ -2436,7 +2474,10 @@ export default function App() {
             <p className={`${T.titleSmall}`} style={{ color: C.error }}>
               Sair da conta
             </p>
-            <p className={`${T.bodySmall}`} style={{ color: C.onSurfaceVariant }}>
+            <p
+              className={`${T.bodySmall}`}
+              style={{ color: C.onSurfaceVariant }}
+            >
               Encerrar sessão neste dispositivo
             </p>
           </div>
@@ -2478,7 +2519,12 @@ export default function App() {
         <a href="#main-content" className="skip-link">
           Ir para o conteúdo
         </a>
-        <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        <div
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {announcement}
         </div>
         {/* Screen content */}
@@ -2520,10 +2566,7 @@ function FoodListItem({
         className="absolute inset-0 rounded-[16px] opacity-0 group-hover:opacity-[0.08] group-active:opacity-[0.12] transition-opacity"
         style={{ backgroundColor: C.onSurface }}
       />
-      <span
-        className="text-2xl flex-shrink-0 relative z-10"
-        aria-hidden="true"
-      >
+      <span className="text-2xl flex-shrink-0 relative z-10" aria-hidden="true">
         {food.emoji}
       </span>
       <div className="flex-1 min-w-0 relative z-10">

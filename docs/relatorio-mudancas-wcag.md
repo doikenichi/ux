@@ -2,7 +2,7 @@
 
 ## 1. Identificação
 
-- **Aplicação:** NutriDia — protótipo de registro e acompanhamento nutricional.
+- **Aplicação:** ComiTora — protótipo de registro e acompanhamento nutricional.
 - **Idioma:** português brasileiro (`pt-BR`).
 - **Meta adotada:** WCAG 2.2, níveis A e AA.
 - **Data do relatório:** 22 de agosto de 2026.
