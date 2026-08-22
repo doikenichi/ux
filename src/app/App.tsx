@@ -14,10 +14,15 @@ import {
   UtensilsCrossed,
   UserRound,
   LockKeyhole,
+  Ruler,
+  Weight,
+  UsersRound,
   Settings,
   Sun,
   Moon,
   Contrast,
+  ALargeSmall,
+  Accessibility,
   Bell,
   Copy,
   Undo2,
@@ -66,18 +71,30 @@ const elev = {
 
 // ── MD3 Type Scale ────────────────────────────────────────────────────────
 const T = {
-  displayLarge: "text-[52px] leading-[58px] font-semibold tracking-[-0.5px]",
-  headlineMedium: "text-[30px] leading-[38px] font-semibold tracking-[-0.25px]",
-  headlineSmall: "text-[26px] leading-[34px] font-semibold",
-  titleLarge: "text-[22px] leading-[28px] font-semibold",
-  titleMedium: "text-[16px] leading-[24px] font-semibold tracking-[0.1px]",
-  titleSmall: "text-[14px] leading-[20px] font-semibold tracking-[0.1px]",
-  bodyLarge: "text-[16px] leading-[24px] font-normal tracking-[0.2px]",
-  bodyMedium: "text-[14px] leading-[20px] font-normal tracking-[0.2px]",
-  bodySmall: "text-[12px] leading-[16px] font-normal tracking-[0.3px]",
-  labelLarge: "text-[14px] leading-[20px] font-semibold tracking-[0.1px]",
-  labelMedium: "text-[12px] leading-[16px] font-semibold tracking-[0.4px]",
-  labelSmall: "text-[12px] leading-[16px] font-semibold tracking-[0.4px]",
+  displayLarge:
+    "text-[var(--type-display-large)] leading-[var(--type-display-large-line)] font-semibold",
+  headlineMedium:
+    "text-[var(--type-headline-medium)] leading-[var(--type-headline-medium-line)] font-semibold",
+  headlineSmall:
+    "text-[var(--type-headline-small)] leading-[var(--type-headline-small-line)] font-semibold",
+  titleLarge:
+    "text-[var(--type-title-large)] leading-[var(--type-title-large-line)] font-semibold",
+  titleMedium:
+    "text-[var(--type-title-medium)] leading-[var(--type-title-medium-line)] font-semibold tracking-[0.1px]",
+  titleSmall:
+    "text-[var(--type-title-small)] leading-[var(--type-title-small-line)] font-semibold tracking-[0.1px]",
+  bodyLarge:
+    "text-[var(--type-body-large)] leading-[var(--type-body-large-line)] font-normal tracking-[0.2px]",
+  bodyMedium:
+    "text-[var(--type-body-medium)] leading-[var(--type-body-medium-line)] font-normal tracking-[0.2px]",
+  bodySmall:
+    "text-[var(--type-body-small)] leading-[var(--type-body-small-line)] font-normal tracking-[0.3px]",
+  labelLarge:
+    "text-[var(--type-label-large)] leading-[var(--type-label-large-line)] font-semibold tracking-[0.1px]",
+  labelMedium:
+    "text-[var(--type-label-medium)] leading-[var(--type-label-medium-line)] font-semibold tracking-[0.4px]",
+  labelSmall:
+    "text-[var(--type-label-small)] leading-[var(--type-label-small-line)] font-semibold tracking-[0.4px]",
 };
 
 // ── Types / Data ──────────────────────────────────────────────────────────
@@ -93,6 +110,7 @@ type Screen =
 type MealName = "Café da manhã" | "Almoço" | "Jantar" | "Lanche";
 type NavTab = "home" | "register" | "progress" | "settings";
 type ThemeMode = "light" | "dark";
+type TextScale = "normal" | "large" | "extra";
 
 const SCREEN_TITLES: Record<Screen, string> = {
   onboarding: "Criar perfil",
@@ -773,6 +791,15 @@ export default function App() {
     }
     return legacyAppearance === "high-contrast";
   });
+  const [textScale, setTextScale] = useState<TextScale>(() => {
+    const savedScale = localStorage.getItem("nutri-text-scale");
+    return savedScale === "large" || savedScale === "extra"
+      ? savedScale
+      : "normal";
+  });
+  const [reducedMotion, setReducedMotion] = useState(
+    () => localStorage.getItem("nutri-reduced-motion") === "true",
+  );
   const [profile, setProfile] = useState<Profile | null>(() => {
     const saved = localStorage.getItem("nutri-profile");
     return saved ? JSON.parse(saved) : null;
@@ -807,12 +834,25 @@ export default function App() {
   });
 
   useEffect(() => {
-    document.documentElement.classList.remove("high-contrast", "light", "dark");
+    document.documentElement.classList.remove(
+      "high-contrast",
+      "light",
+      "dark",
+      "text-scale-large",
+      "text-scale-extra",
+      "reduce-motion",
+    );
     document.documentElement.classList.add(themeMode);
     if (highContrast) document.documentElement.classList.add("high-contrast");
+    if (textScale !== "normal") {
+      document.documentElement.classList.add(`text-scale-${textScale}`);
+    }
+    if (reducedMotion) document.documentElement.classList.add("reduce-motion");
     localStorage.setItem("nutri-theme", themeMode);
     localStorage.setItem("nutri-high-contrast", String(highContrast));
-  }, [themeMode, highContrast]);
+    localStorage.setItem("nutri-text-scale", textScale);
+    localStorage.setItem("nutri-reduced-motion", String(reducedMotion));
+  }, [themeMode, highContrast, textScale, reducedMotion]);
 
   useEffect(() => {
     if (profile) localStorage.setItem("nutri-profile", JSON.stringify(profile));
@@ -867,8 +907,11 @@ export default function App() {
   function finishOnboarding(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const errors: OnboardingErrors = {};
-    if (!draftProfile.name.trim()) {
+    const normalizedName = draftProfile.name.trim();
+    if (!normalizedName) {
       errors.name = "Informe seu nome para continuar.";
+    } else if (normalizedName.length < 3) {
+      errors.name = "Informe pelo menos 3 caracteres no nome.";
     }
     if (!Number.isFinite(draftProfile.height) || draftProfile.height <= 0) {
       errors.height = "Informe uma altura maior que zero.";
@@ -882,7 +925,7 @@ export default function App() {
       document.getElementById(`profile-${firstInvalidField}`)?.focus();
       return;
     }
-    setProfile({ ...draftProfile, name: draftProfile.name.trim() });
+    setProfile({ ...draftProfile, name: normalizedName });
     setAnnouncement("Perfil criado com sucesso.");
     setScreen("dashboard");
   }
@@ -1017,16 +1060,19 @@ export default function App() {
     );
   }
 
+  const hasOnboardingErrors = Object.values(onboardingErrors).some(Boolean);
+  const firstOnboardingError = Object.values(onboardingErrors).find(Boolean);
+
   // ── Screen: Access and questionnaire ────────────────────────────────
   const Onboarding = (
     <form
-      className="flex h-full flex-col overflow-y-auto px-5 py-8"
+      className="flex h-full flex-col overflow-y-auto px-5 py-7"
       onSubmit={finishOnboarding}
       noValidate
     >
-      <div className="mb-6">
+      <div className="mb-5 text-center">
         <div
-          className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+          className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
           style={{ backgroundColor: C.primaryContainer }}
         >
           <UtensilsCrossed size={28} style={{ color: C.onPrimaryContainer }} />
@@ -1049,6 +1095,35 @@ export default function App() {
         </p>
       </div>
 
+      {hasOnboardingErrors && (
+        <div
+          className="mb-3 flex items-start gap-3 rounded-2xl border px-4 py-3"
+          style={{
+            backgroundColor: C.errorContainer,
+            borderColor: C.error,
+            color: C.onErrorContainer,
+          }}
+          role="alert"
+          aria-live="assertive"
+        >
+          <span
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${T.titleSmall}`}
+            style={{ borderColor: C.error, color: C.error }}
+            aria-hidden="true"
+          >
+            !
+          </span>
+          <div>
+            <p className={T.titleSmall} style={{ color: C.onErrorContainer }}>
+              Revise os campos destacados
+            </p>
+            <p className={`${T.bodySmall} mt-1`} style={{ color: C.onErrorContainer }}>
+              {firstOnboardingError}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
         <label className="block" htmlFor="profile-name">
           <span
@@ -1058,8 +1133,11 @@ export default function App() {
             Seu nome
           </span>
           <div
-            className="flex items-center gap-3 rounded-2xl px-4"
-            style={{ backgroundColor: C.surfaceContainerHighest }}
+            className="flex items-center gap-3 rounded-2xl border px-4"
+            style={{
+              backgroundColor: C.surfaceContainerHighest,
+              borderColor: onboardingErrors.name ? C.error : "transparent",
+            }}
           >
             <UserRound size={19} style={{ color: C.onSurfaceVariant }} />
             <input
@@ -1139,9 +1217,13 @@ export default function App() {
         </label>
       </div>
 
-      <div
-        className="my-6 h-px"
-        style={{ backgroundColor: C.outlineVariant }}
+      <hr
+        aria-hidden="true"
+        className="mt-5 mb-5 w-full"
+        style={{
+          border: 0,
+          borderTop: `1.5px solid ${C.outlineVariant}`,
+        }}
       />
       <fieldset>
         <legend
@@ -1158,36 +1240,42 @@ export default function App() {
             >
               Altura (cm)
             </span>
-            <input
-              id="profile-height"
-              name="height"
-              type="number"
-              min="1"
-              step="0.1"
-              inputMode="decimal"
-              required
-              aria-label="Altura em centímetros"
-              aria-invalid={Boolean(onboardingErrors.height)}
-              aria-describedby={
-                onboardingErrors.height ? "profile-height-error" : undefined
-              }
-              value={draftProfile.height}
-              onChange={(e) => {
-                setDraftProfile((p) => ({
-                  ...p,
-                  height: Number(e.target.value),
-                }));
-                setOnboardingErrors((current) => ({
-                  ...current,
-                  height: undefined,
-                }));
-              }}
-              className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
+            <div
+              className="flex items-center gap-3 rounded-2xl border px-4"
               style={{
                 backgroundColor: C.surfaceContainerHighest,
-                color: C.onSurface,
+                borderColor: onboardingErrors.height ? C.error : "transparent",
               }}
-            />
+            >
+              <Ruler aria-hidden="true" size={19} style={{ color: C.onSurfaceVariant }} />
+              <input
+                id="profile-height"
+                name="height"
+                type="number"
+                min="1"
+                step="0.1"
+                inputMode="decimal"
+                required
+                aria-label="Altura em centímetros"
+                aria-invalid={Boolean(onboardingErrors.height)}
+                aria-describedby={
+                  onboardingErrors.height ? "profile-height-error" : undefined
+                }
+                value={draftProfile.height}
+                onChange={(e) => {
+                  setDraftProfile((p) => ({
+                    ...p,
+                    height: Number(e.target.value),
+                  }));
+                  setOnboardingErrors((current) => ({
+                    ...current,
+                    height: undefined,
+                  }));
+                }}
+                className={`h-14 min-w-0 flex-1 bg-transparent outline-none ${T.bodyLarge}`}
+                style={{ color: C.onSurface }}
+              />
+            </div>
             {onboardingErrors.height && (
               <span
                 id="profile-height-error"
@@ -1205,36 +1293,42 @@ export default function App() {
             >
               Peso (kg)
             </span>
-            <input
-              id="profile-weight"
-              name="weight"
-              type="number"
-              min="1"
-              step="0.1"
-              inputMode="decimal"
-              required
-              aria-label="Peso em quilos"
-              aria-invalid={Boolean(onboardingErrors.weight)}
-              aria-describedby={
-                onboardingErrors.weight ? "profile-weight-error" : undefined
-              }
-              value={draftProfile.weight}
-              onChange={(e) => {
-                setDraftProfile((p) => ({
-                  ...p,
-                  weight: Number(e.target.value),
-                }));
-                setOnboardingErrors((current) => ({
-                  ...current,
-                  weight: undefined,
-                }));
-              }}
-              className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
+            <div
+              className="flex items-center gap-3 rounded-2xl border px-4"
               style={{
                 backgroundColor: C.surfaceContainerHighest,
-                color: C.onSurface,
+                borderColor: onboardingErrors.weight ? C.error : "transparent",
               }}
-            />
+            >
+              <Weight aria-hidden="true" size={19} style={{ color: C.onSurfaceVariant }} />
+              <input
+                id="profile-weight"
+                name="weight"
+                type="number"
+                min="1"
+                step="0.1"
+                inputMode="decimal"
+                required
+                aria-label="Peso em quilos"
+                aria-invalid={Boolean(onboardingErrors.weight)}
+                aria-describedby={
+                  onboardingErrors.weight ? "profile-weight-error" : undefined
+                }
+                value={draftProfile.weight}
+                onChange={(e) => {
+                  setDraftProfile((p) => ({
+                    ...p,
+                    weight: Number(e.target.value),
+                  }));
+                  setOnboardingErrors((current) => ({
+                    ...current,
+                    weight: undefined,
+                  }));
+                }}
+                className={`h-14 min-w-0 flex-1 bg-transparent outline-none ${T.bodyLarge}`}
+                style={{ color: C.onSurface }}
+              />
+            </div>
             {onboardingErrors.weight && (
               <span
                 id="profile-weight-error"
@@ -1253,29 +1347,32 @@ export default function App() {
           >
             Sexo
           </span>
-          <select
-            id="profile-sex"
-            name="sex"
-            value={draftProfile.sex}
-            onChange={(e) =>
-              setDraftProfile((p) => ({
-                ...p,
-                sex: e.target.value as Profile["sex"],
-              }))
-            }
-            className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
-            style={{
-              backgroundColor: C.surfaceContainerHighest,
-              color: C.onSurface,
-            }}
+          <div
+            className="flex items-center gap-3 rounded-2xl px-4"
+            style={{ backgroundColor: C.surfaceContainerHighest }}
           >
-            <option>Feminino</option>
-            <option>Masculino</option>
-            <option>Outro</option>
-          </select>
+            <UsersRound aria-hidden="true" size={19} style={{ color: C.onSurfaceVariant }} />
+            <select
+              id="profile-sex"
+              name="sex"
+              value={draftProfile.sex}
+              onChange={(e) =>
+                setDraftProfile((p) => ({
+                  ...p,
+                  sex: e.target.value as Profile["sex"],
+                }))
+              }
+              className={`h-14 min-w-0 flex-1 bg-transparent outline-none ${T.bodyLarge}`}
+              style={{ color: C.onSurface }}
+            >
+              <option>Feminino</option>
+              <option>Masculino</option>
+              <option>Outro</option>
+            </select>
+          </div>
         </label>
       </fieldset>
-      <div className="mt-auto pt-6">
+      <div className="mt-auto pt-5 pb-2">
         <FilledButton type="submit" fullWidth icon={<Check size={20} />}>
           Entrar e continuar
         </FilledButton>
@@ -1312,8 +1409,16 @@ export default function App() {
 
       {/* Calorie ring — in surface-container card */}
       <div className="px-4 pb-4">
-        <ElevatedCard className="relative flex justify-center overflow-hidden py-5">
+        <ElevatedCard className="relative flex flex-col items-center justify-center overflow-hidden py-5">
           <CalorieRing current={totalKcal} goal={goalKcal} size={196} />
+          <p
+            className={`${T.bodyMedium} mt-1 text-center`}
+            style={{ color: C.onSurfaceVariant }}
+          >
+            Resumo: {totalKcal <= goalKcal
+              ? `${goalKcal - totalKcal} kcal restantes hoje`
+              : `${totalKcal - goalKcal} kcal acima da meta hoje`}
+          </p>
         </ElevatedCard>
       </div>
 
@@ -1756,7 +1861,7 @@ export default function App() {
             </button>
             <div className="text-center">
               <span
-                className={`${T.displayLarge} text-[48px]`}
+                className={T.displayLarge}
                 style={{ color: C.onSurface }}
               >
                 {grams}
@@ -2052,8 +2157,16 @@ export default function App() {
         </ElevatedCard>
       </div>
 
-      <div className="flex justify-center py-3">
+      <div className="flex flex-col items-center justify-center py-3">
         <CalorieRing current={selectedKcal} goal={goalKcal} size={200} />
+        <p
+          className={`${T.bodyMedium} mt-1 text-center`}
+          style={{ color: C.onSurfaceVariant }}
+        >
+          Resumo: {selectedKcal <= goalKcal
+            ? `${goalKcal - selectedKcal} kcal disponíveis`
+            : `${selectedKcal - goalKcal} kcal acima da meta`}
+        </p>
       </div>
 
       <div className="px-4 pb-4">
@@ -2462,6 +2575,129 @@ export default function App() {
           </label>
         </div>
 
+        <div
+          className="mt-6"
+          aria-labelledby="accessibility-heading"
+        >
+          <p
+            id="accessibility-heading"
+            className={`${T.labelMedium} mb-2 px-1 uppercase tracking-widest`}
+            style={{ color: C.onSurfaceVariant }}
+          >
+            Acessibilidade
+          </p>
+          <div
+            className="rounded-[24px] p-4"
+            style={{ backgroundColor: C.surfaceContainerLow }}
+          >
+            <div className="mb-3 flex items-start gap-3">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                style={{ backgroundColor: C.primaryContainer }}
+              >
+                <ALargeSmall
+                  aria-hidden="true"
+                  size={22}
+                  style={{ color: C.onPrimaryContainer }}
+                />
+              </div>
+              <div>
+                <p className={`${T.titleSmall}`} style={{ color: C.onSurface }}>
+                  Tamanho do texto
+                </p>
+                <p
+                  className={`${T.bodySmall}`}
+                  style={{ color: C.onSurfaceVariant }}
+                >
+                  Ajuste para leitura confortável
+                </p>
+              </div>
+            </div>
+            <fieldset
+              className="grid grid-cols-3 overflow-hidden rounded-full border"
+              style={{ borderColor: C.outline }}
+            >
+              <legend className="sr-only">Tamanho do texto</legend>
+              {(
+                [
+                  ["normal", "Normal"],
+                  ["large", "Grande"],
+                  ["extra", "Extra"],
+                ] as const
+              ).map(([scale, label], index) => {
+                const selected = textScale === scale;
+                return (
+                  <label
+                    key={scale}
+                    className={`accessible-choice flex min-h-12 items-center justify-center ${index > 0 ? "border-l" : ""}`}
+                    style={{
+                      borderColor: C.outline,
+                      backgroundColor: selected
+                        ? C.primaryContainer
+                        : "transparent",
+                      color: selected ? C.onPrimaryContainer : C.onSurface,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="text-scale"
+                      value={scale}
+                      checked={selected}
+                      onChange={() => setTextScale(scale)}
+                    />
+                    <span className={T.labelLarge}>{label}</span>
+                  </label>
+                );
+              })}
+            </fieldset>
+          </div>
+
+          <div
+            className="mt-3 flex items-center justify-between rounded-[20px] p-4"
+            style={{ backgroundColor: C.surfaceContainerLow }}
+          >
+            <div className="flex items-center gap-3">
+              <Accessibility aria-hidden="true" size={22} style={{ color: C.onSurfaceVariant }} />
+              <div>
+                <p className={`${T.titleSmall}`} style={{ color: C.onSurface }}>
+                  Reduzir movimento
+                </p>
+                <p
+                  className={`${T.bodySmall}`}
+                  style={{ color: C.onSurfaceVariant }}
+                >
+                  Menos animações e transições
+                </p>
+              </div>
+            </div>
+            <label className="accessible-switch">
+              <input
+                type="checkbox"
+                aria-label="Reduzir movimento"
+                checked={reducedMotion}
+                onChange={(event) => setReducedMotion(event.target.checked)}
+              />
+              <span
+                aria-hidden="true"
+                className="relative block h-8 w-14 rounded-full border transition-colors"
+                style={{
+                  backgroundColor: reducedMotion ? C.primary : C.surfaceVariant,
+                  borderColor: reducedMotion ? C.primary : C.outline,
+                }}
+              >
+                <span
+                  className="absolute top-1 h-6 w-6 rounded-full transition-transform"
+                  style={{
+                    left: reducedMotion ? "calc(100% - 28px)" : "4px",
+                    backgroundColor: reducedMotion
+                      ? C.onPrimary
+                      : C.onSurfaceVariant,
+                  }}
+                />
+              </span>
+            </label>
+          </div>
+        </div>
         <button
           type="button"
           onClick={handleLogout}
@@ -2571,13 +2807,13 @@ function FoodListItem({
       </span>
       <div className="flex-1 min-w-0 relative z-10">
         <p
-          className="text-[16px] leading-6 font-normal tracking-[0.2px] truncate"
+          className={`${T.bodyLarge} truncate`}
           style={{ color: C.onSurface }}
         >
           {food.name}
         </p>
         <p
-          className="text-[12px] leading-4 tracking-[0.3px]"
+          className={T.bodySmall}
           style={{ color: C.onSurfaceVariant }}
         >
           {food.kcal} kcal / 100g

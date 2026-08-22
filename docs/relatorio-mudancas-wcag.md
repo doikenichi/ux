@@ -84,6 +84,25 @@ As seguintes melhorias ultrapassam alguns requisitos mínimos de nível AA ou se
 - opção própria de alto contraste em conjunto com temas claro e escuro;
 - conteúdo nutricional acompanhado de ressalva de que não constitui orientação médica.
 
+
+### 4.1 Ajustes complementares para baixa visão e preferências do usuário
+
+Os ajustes abaixo foram adicionados como evolução do protótipo para tornar as preferências de acessibilidade mais perceptíveis e aplicáveis em todos os fluxos principais da aplicação.
+
+| Critério | Nível | Mudança implementada | Evidência |
+| --- | --- | --- | --- |
+| [1.1.1 Conteúdo Não Textual](https://www.w3.org/Translations/WCAG22-pt-BR/#non-text-content) | A | Indicadores visuais de calorias passaram a ter também resumo textual visível, reduzindo dependência exclusiva do gráfico circular. Ícones decorativos adicionados aos campos de perfil foram ocultados de tecnologias assistivas. | Resumos “Resumo: ... kcal” em `Dashboard` e `Progress`; ícones com `aria-hidden` no onboarding em `src/app/App.tsx`. |
+| [1.3.1 Informações e Relações](https://www.w3.org/Translations/WCAG22-pt-BR/#info-and-relationships) | A | A tela de perfil mantém a separação semântica entre credenciais e dados pessoais com `fieldset`, `legend` e divisor visual entre as seções. | Seção “Sobre você” e divisor entre campos de credenciais e dados pessoais em `src/app/App.tsx`. |
+| [1.4.1 Uso de Cores](https://www.w3.org/Translations/WCAG22-pt-BR/#use-of-color) | A | Erros do perfil combinam cor com borda, mensagem textual e resumo de erro; o usuário não depende apenas do vermelho para identificar o problema. | Card “Revise os campos destacados”, bordas dos campos inválidos e mensagens em `finishOnboarding`/Onboarding. |
+| [1.4.3 Contraste Mínimo](https://www.w3.org/Translations/WCAG22-pt-BR/#contrast-minimum) | AA | O modo de alto contraste foi reforçado para tornar a diferença visual mais perceptível, com textos, bordas, superfícies e estados selecionados mais separados. | Tokens `.high-contrast` em `src/styles/theme.css`. |
+| [1.4.4 Redimensionar Texto](https://www.w3.org/Translations/WCAG22-pt-BR/#resize-text) | AA | A configuração “Tamanho do texto” oferece as opções Normal, Grande e Extra, aplicadas globalmente ao documento por classes no `html` e variáveis tipográficas. | `textScale`, `text-scale-large`, `text-scale-extra` e tokens `--type-*` em `src/app/App.tsx` e `src/styles/theme.css`. |
+| [1.4.10 Realinhar](https://www.w3.org/Translations/WCAG22-pt-BR/#reflow) | AA | Os textos das listas, cards e controles passam a acompanhar a escala global sem depender de tamanhos fixos, permitindo que os cards cresçam e a rolagem preserve o conteúdo. | Substituição de tamanhos fixos por `T.bodyLarge`, `T.bodySmall` e variáveis tipográficas em `src/app/App.tsx`. |
+| [1.4.11 Contraste Não Textual](https://www.w3.org/Translations/WCAG22-pt-BR/#non-text-contrast) | AA | Bordas de campos inválidos, divisor de seções e contornos do modo alto contraste foram reforçados para melhorar a distinção de componentes e estados. | Bordas condicionais de erro no onboarding, `hr` entre seções e tokens `--md-outline`/`--md-outline-variant`. |
+| [2.1.1 Teclado](https://www.w3.org/Translations/WCAG22-pt-BR/#keyboard) | A | As preferências de acessibilidade usam rádio e checkbox nativos, mantendo operação por teclado e estado programático. | Controles “Tamanho do texto”, “Alto contraste” e “Reduzir movimento” em `SettingsScreen`. |
+| [2.3.3 Animação de Interações](https://www.w3.org/Translations/WCAG22-pt-BR/#animation-from-interactions) | AAA | A opção “Reduzir movimento” permite remover transições e animações não essenciais por preferência do usuário, como complemento ao `prefers-reduced-motion` do sistema. | Estado `reducedMotion`, classe `reduce-motion` e regra CSS global em `src/app/App.tsx` e `src/styles/theme.css`. |
+| [3.3.1 Identificação do Erro](https://www.w3.org/Translations/WCAG22-pt-BR/#error-identification) | A | O campo nome passou a validar preenchimento e mínimo de 3 caracteres, exibindo mensagem específica e foco no primeiro campo inválido. | Validação `normalizedName.length < 3`, `aria-invalid` e mensagens em `finishOnboarding`. |
+| [3.3.3 Sugestão de Erro](https://www.w3.org/Translations/WCAG22-pt-BR/#error-suggestion) | AA | As mensagens indicam como corrigir o erro, incluindo a quantidade mínima de caracteres exigida no nome. | Mensagem “Informe pelo menos 3 caracteres no nome.” em `src/app/App.tsx`. |
+| [4.1.2 Nome, Função, Valor](https://www.w3.org/Translations/WCAG22-pt-BR/#name-role-value) | A | As novas preferências persistem e expõem estado por controles nativos; o estado visual selecionado acompanha `checked`. | `checked`, `onChange`, `name="text-scale"`, `aria-label` e persistência em `localStorage`. |
 ## 5. Validações executadas
 
 ### 5.1 Testes automatizados
@@ -132,8 +151,8 @@ A análise automatizada não consegue validar toda a WCAG. Antes da entrega defi
 
 ## 7. Arquivos criados ou modificados
 
-- `src/app/App.tsx`: semântica, formulário, foco, controles, nomes e mensagens acessíveis.
-- `src/styles/theme.css`: foco, realinhamento, alvos, contraste forçado e movimento reduzido.
+- `src/app/App.tsx`: semântica, formulário, foco, controles, preferências globais de acessibilidade, nomes e mensagens acessíveis.
+- `src/styles/theme.css`: foco, realinhamento, alvos, escala tipográfica, alto contraste reforçado, contraste forçado e movimento reduzido.
 - `index.html`: idioma, título e descrição em português.
 - `package.json` e `package-lock.json`: infraestrutura e comandos de teste.
 - `vitest.config.ts` e `src/test/setup.ts`: ambiente de testes.
