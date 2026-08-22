@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Search,
   ChevronLeft,
@@ -93,6 +93,19 @@ type Screen =
 type MealName = "Café da manhã" | "Almoço" | "Jantar" | "Lanche";
 type NavTab = "home" | "register" | "progress" | "settings";
 type ThemeMode = "light" | "dark";
+
+const SCREEN_TITLES: Record<Screen, string> = {
+  onboarding: "Criar perfil",
+  dashboard: "Início",
+  search: "Buscar alimento",
+  foodDetail: "Detalhes do alimento",
+  confirmation: "Confirmação do registro",
+  progress: "Cálculo diário",
+  mealDetail: "Detalhes da refeição",
+  settings: "Configurações",
+};
+
+type OnboardingErrors = Partial<Record<"name" | "height" | "weight", string>>;
 
 interface Profile {
   name: string;
@@ -335,7 +348,8 @@ function MacroBar({
         aria-label={label}
         aria-valuemin={0}
         aria-valuemax={max}
-        aria-valuenow={value}
+        aria-valuenow={Math.min(value, max)}
+        aria-valuetext={`${value} gramas de ${max} gramas`}
       >
         <div
           className="absolute inset-x-0 h-1.5 rounded-full"
@@ -440,16 +454,18 @@ function FilledButton({
   children,
   icon,
   fullWidth = false,
+  type = "button",
 }: {
-  onClick: () => void;
+  onClick?: () => void;
   children: React.ReactNode;
   icon?: React.ReactNode;
   fullWidth?: boolean;
+  type?: "button" | "submit";
 }) {
   return (
     <button
       onClick={onClick}
-      type="button"
+      type={type}
       className={`relative overflow-hidden flex min-h-12 items-center justify-center gap-2 px-6 rounded-full ${fullWidth ? "w-full min-h-14" : ""} transition-all active:scale-[0.97] group`}
       style={{
         backgroundColor: C.primary,
@@ -741,6 +757,8 @@ function SegmentedButton({
 
 // ── App ───────────────────────────────────────────────────────────────────
 export default function App() {
+  const mainRef = useRef<HTMLElement>(null);
+  const previousScreenRef = useRef<Screen | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
     const savedTheme = localStorage.getItem("nutri-theme");
     const legacyAppearance = localStorage.getItem("nutri-appearance");
@@ -777,6 +795,10 @@ export default function App() {
     () => localStorage.getItem("nutri-reminders") === "true",
   );
   const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [announcement, setAnnouncement] = useState("");
+  const [onboardingErrors, setOnboardingErrors] = useState<OnboardingErrors>(
+    {},
+  );
   const [draftProfile, setDraftProfile] = useState<Profile>({
     name: "",
     height: 170,
@@ -799,6 +821,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("nutri-reminders", String(remindersEnabled));
   }, [remindersEnabled]);
+
+  useEffect(() => {
+    document.title = `${SCREEN_TITLES[screen]} | ComiTora`;
+    if (previousScreenRef.current !== null) {
+      mainRef.current?.querySelector<HTMLElement>("h1")?.focus();
+    }
+    previousScreenRef.current = screen;
+  }, [screen]);
 
   const today = new Date();
   today.setDate(today.getDate() + dateOffset);
@@ -834,14 +864,26 @@ export default function App() {
   const selectedKcal = sumKcal(selectedLog);
   const lastLoggedEntry = [...log].reverse()[0];
 
-  function finishOnboarding() {
-    if (
-      !draftProfile.name.trim() ||
-      draftProfile.height <= 0 ||
-      draftProfile.weight <= 0
-    )
+  function finishOnboarding(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const errors: OnboardingErrors = {};
+    if (!draftProfile.name.trim()) {
+      errors.name = "Informe seu nome para continuar.";
+    }
+    if (!Number.isFinite(draftProfile.height) || draftProfile.height <= 0) {
+      errors.height = "Informe uma altura maior que zero.";
+    }
+    if (!Number.isFinite(draftProfile.weight) || draftProfile.weight <= 0) {
+      errors.weight = "Informe um peso maior que zero.";
+    }
+    setOnboardingErrors(errors);
+    const firstInvalidField = Object.keys(errors)[0];
+    if (firstInvalidField) {
+      document.getElementById(`profile-${firstInvalidField}`)?.focus();
       return;
+    }
     setProfile({ ...draftProfile, name: draftProfile.name.trim() });
+    setAnnouncement("Perfil criado com sucesso.");
     setScreen("dashboard");
   }
 
@@ -881,6 +923,7 @@ export default function App() {
     setLastAddedEntry(newEntry);
     setConfirmationUndone(false);
     setFeedbackMessage("");
+    setAnnouncement(`${selFood.name} adicionado a ${selMeal}.`);
     setScreen("confirmation");
   }
 
@@ -889,6 +932,7 @@ export default function App() {
     setLog((prev) => prev.filter((entry) => entry !== lastAddedEntry));
     setLastAddedEntry(null);
     setConfirmationUndone(true);
+    setAnnouncement("Registro desfeito. O alimento foi removido do dia.");
   }
 
   function repeatLastMeal() {
@@ -908,6 +952,9 @@ export default function App() {
         entriesToRepeat.length +
         " alimentos.",
     );
+    setAnnouncement(
+      `${lastEntry.meal} repetido com ${entriesToRepeat.length} alimentos.`,
+    );
   }
 
   function removeEntry(entry: LogEntry) {
@@ -917,6 +964,7 @@ export default function App() {
       const realIdx = prev.length - 1 - idx;
       return [...prev.slice(0, realIdx), ...prev.slice(realIdx + 1)];
     });
+    setAnnouncement(`${entry.food.name} removido de ${entry.meal}.`);
   }
 
   function navigate(tab: NavTab, target: Screen) {
@@ -947,6 +995,8 @@ export default function App() {
         <span
           className={`${T.titleSmall} capitalize`}
           style={{ color: C.onSurface }}
+          aria-live="polite"
+          aria-atomic="true"
         >
           {dateStr}
         </span>
@@ -969,7 +1019,11 @@ export default function App() {
 
   // ── Screen: Access and questionnaire ────────────────────────────────
   const Onboarding = (
-    <div className="flex h-full flex-col overflow-y-auto px-5 py-8">
+    <form
+      className="flex h-full flex-col overflow-y-auto px-5 py-8"
+      onSubmit={finishOnboarding}
+      noValidate
+    >
       <div className="mb-6">
         <div
           className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
@@ -981,6 +1035,7 @@ export default function App() {
           Nutrição simples, todos os dias
         </p>
         <h1
+          tabIndex={-1}
           className={`${T.headlineMedium} mt-1`}
           style={{ color: C.onSurface }}
         >
@@ -995,7 +1050,7 @@ export default function App() {
       </div>
 
       <div className="space-y-3">
-        <label className="block">
+        <label className="block" htmlFor="profile-name">
           <span
             className={`${T.labelMedium} mb-1 block`}
             style={{ color: C.onSurfaceVariant }}
@@ -1008,23 +1063,40 @@ export default function App() {
           >
             <UserRound size={19} style={{ color: C.onSurfaceVariant }} />
             <input
+              id="profile-name"
+              name="name"
+              autoComplete="name"
+              required
               aria-label="Seu nome"
-              value={draftProfile.name}
-              onChange={(e) =>
-                setDraftProfile((p) => ({ ...p, name: e.target.value }))
+              aria-invalid={Boolean(onboardingErrors.name)}
+              aria-describedby={
+                onboardingErrors.name ? "profile-name-error" : undefined
               }
+              value={draftProfile.name}
+              onChange={(e) => {
+                setDraftProfile((p) => ({ ...p, name: e.target.value }));
+                setOnboardingErrors((current) => ({
+                  ...current,
+                  name: undefined,
+                }));
+              }}
               placeholder="Como podemos chamar você?"
               className={`h-14 flex-1 bg-transparent outline-none ${T.bodyLarge}`}
               style={{ color: C.onSurface }}
             />
           </div>
+          {onboardingErrors.name && (
+            <span id="profile-name-error" className="form-error" role="alert">
+              {onboardingErrors.name}
+            </span>
+          )}
         </label>
-        <label className="block">
+        <label className="block" htmlFor="profile-email">
           <span
             className={`${T.labelMedium} mb-1 block`}
             style={{ color: C.onSurfaceVariant }}
           >
-            E-mail
+            E-mail <span className="font-normal">(opcional)</span>
           </span>
           <div
             className="flex items-center gap-3 rounded-2xl px-4"
@@ -1032,20 +1104,22 @@ export default function App() {
           >
             <span style={{ color: C.onSurfaceVariant }}>@</span>
             <input
+              id="profile-email"
+              name="email"
               type="email"
-              aria-label="E-mail"
+              autoComplete="email"
               placeholder="voce@email.com"
               className={`h-14 flex-1 bg-transparent outline-none ${T.bodyLarge}`}
               style={{ color: C.onSurface }}
             />
           </div>
         </label>
-        <label className="block">
+        <label className="block" htmlFor="profile-password">
           <span
             className={`${T.labelMedium} mb-1 block`}
             style={{ color: C.onSurfaceVariant }}
           >
-            Senha
+            Senha <span className="font-normal">(opcional)</span>
           </span>
           <div
             className="flex items-center gap-3 rounded-2xl px-4"
@@ -1053,8 +1127,10 @@ export default function App() {
           >
             <LockKeyhole size={19} style={{ color: C.onSurfaceVariant }} />
             <input
+              id="profile-password"
+              name="password"
               type="password"
-              aria-label="Senha"
+              autoComplete="new-password"
               placeholder="Crie uma senha"
               className={`h-14 flex-1 bg-transparent outline-none ${T.bodyLarge}`}
               style={{ color: C.onSurface }}
@@ -1067,92 +1143,144 @@ export default function App() {
         className="my-6 h-px"
         style={{ backgroundColor: C.outlineVariant }}
       />
-      <p className={`${T.titleMedium} mb-3`} style={{ color: C.onSurface }}>
-        Sobre você
-      </p>
-      <div className="grid grid-cols-2 gap-3">
-        <label>
+      <fieldset>
+        <legend
+          className={`${T.titleMedium} mb-3`}
+          style={{ color: C.onSurface }}
+        >
+          Sobre você
+        </legend>
+        <div className="grid grid-cols-2 profile-measures gap-3">
+          <label htmlFor="profile-height">
+            <span
+              className={`${T.labelMedium} mb-1 block`}
+              style={{ color: C.onSurfaceVariant }}
+            >
+              Altura (cm)
+            </span>
+            <input
+              id="profile-height"
+              name="height"
+              type="number"
+              min="1"
+              step="0.1"
+              inputMode="decimal"
+              required
+              aria-label="Altura em centímetros"
+              aria-invalid={Boolean(onboardingErrors.height)}
+              aria-describedby={
+                onboardingErrors.height ? "profile-height-error" : undefined
+              }
+              value={draftProfile.height}
+              onChange={(e) => {
+                setDraftProfile((p) => ({
+                  ...p,
+                  height: Number(e.target.value),
+                }));
+                setOnboardingErrors((current) => ({
+                  ...current,
+                  height: undefined,
+                }));
+              }}
+              className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
+              style={{
+                backgroundColor: C.surfaceContainerHighest,
+                color: C.onSurface,
+              }}
+            />
+            {onboardingErrors.height && (
+              <span
+                id="profile-height-error"
+                className="form-error"
+                role="alert"
+              >
+                {onboardingErrors.height}
+              </span>
+            )}
+          </label>
+          <label htmlFor="profile-weight">
+            <span
+              className={`${T.labelMedium} mb-1 block`}
+              style={{ color: C.onSurfaceVariant }}
+            >
+              Peso (kg)
+            </span>
+            <input
+              id="profile-weight"
+              name="weight"
+              type="number"
+              min="1"
+              step="0.1"
+              inputMode="decimal"
+              required
+              aria-label="Peso em quilos"
+              aria-invalid={Boolean(onboardingErrors.weight)}
+              aria-describedby={
+                onboardingErrors.weight ? "profile-weight-error" : undefined
+              }
+              value={draftProfile.weight}
+              onChange={(e) => {
+                setDraftProfile((p) => ({
+                  ...p,
+                  weight: Number(e.target.value),
+                }));
+                setOnboardingErrors((current) => ({
+                  ...current,
+                  weight: undefined,
+                }));
+              }}
+              className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
+              style={{
+                backgroundColor: C.surfaceContainerHighest,
+                color: C.onSurface,
+              }}
+            />
+            {onboardingErrors.weight && (
+              <span
+                id="profile-weight-error"
+                className="form-error"
+                role="alert"
+              >
+                {onboardingErrors.weight}
+              </span>
+            )}
+          </label>
+        </div>
+        <label className="mt-3 block" htmlFor="profile-sex">
           <span
             className={`${T.labelMedium} mb-1 block`}
             style={{ color: C.onSurfaceVariant }}
           >
-            Altura (cm)
+            Sexo
           </span>
-          <input
-            type="number"
-            min="1"
-            aria-label="Altura em centímetros"
-            value={draftProfile.height}
+          <select
+            id="profile-sex"
+            name="sex"
+            value={draftProfile.sex}
             onChange={(e) =>
-              setDraftProfile((p) => ({ ...p, height: Number(e.target.value) }))
+              setDraftProfile((p) => ({
+                ...p,
+                sex: e.target.value as Profile["sex"],
+              }))
             }
             className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
             style={{
               backgroundColor: C.surfaceContainerHighest,
               color: C.onSurface,
             }}
-          />
-        </label>
-        <label>
-          <span
-            className={`${T.labelMedium} mb-1 block`}
-            style={{ color: C.onSurfaceVariant }}
           >
-            Peso (kg)
-          </span>
-          <input
-            type="number"
-            min="1"
-            aria-label="Peso em quilos"
-            value={draftProfile.weight}
-            onChange={(e) =>
-              setDraftProfile((p) => ({ ...p, weight: Number(e.target.value) }))
-            }
-            className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
-            style={{
-              backgroundColor: C.surfaceContainerHighest,
-              color: C.onSurface,
-            }}
-          />
+            <option>Feminino</option>
+            <option>Masculino</option>
+            <option>Outro</option>
+          </select>
         </label>
-      </div>
-      <label className="mt-3 block">
-        <span
-          className={`${T.labelMedium} mb-1 block`}
-          style={{ color: C.onSurfaceVariant }}
-        >
-          Sexo
-        </span>
-        <select
-          aria-label="Sexo"
-          value={draftProfile.sex}
-          onChange={(e) =>
-            setDraftProfile((p) => ({
-              ...p,
-              sex: e.target.value as Profile["sex"],
-            }))
-          }
-          className={`h-14 w-full rounded-2xl px-4 outline-none ${T.bodyLarge}`}
-          style={{
-            backgroundColor: C.surfaceContainerHighest,
-            color: C.onSurface,
-          }}
-        >
-          <option>Feminino</option>
-          <option>Masculino</option>
-          <option>Outro</option>
-        </select>
-      </label>
+      </fieldset>
       <div className="mt-auto pt-6">
-        <FilledButton
-          onClick={finishOnboarding}
-          fullWidth
-          icon={<Check size={20} />}
-        >
+        <FilledButton type="submit" fullWidth icon={<Check size={20} />}>
           Entrar e continuar
         </FilledButton>
       </div>
-    </div>
+    </form>
   );
 
   // ── Screen: Dashboard ────────────────────────────────────────────────
@@ -1167,7 +1295,11 @@ export default function App() {
           >
             Seu dia em equilíbrio
           </p>
-          <h1 className={`${T.headlineMedium}`} style={{ color: C.onSurface }}>
+          <h1
+            tabIndex={-1}
+            className={`${T.headlineMedium}`}
+            style={{ color: C.onSurface }}
+          >
             Olá, {profile?.name}
           </h1>
         </div>
@@ -1248,29 +1380,34 @@ export default function App() {
                   : "Ative quando quiser"}
               </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={remindersEnabled}
-              aria-label="Ativar lembretes gentis"
-              onClick={() => setRemindersEnabled((enabled) => !enabled)}
-              className="relative h-8 w-14 rounded-full transition-colors"
-              style={{
-                backgroundColor: remindersEnabled
-                  ? C.primary
-                  : C.surfaceVariant,
-              }}
-            >
-              <span
-                className="absolute top-1 h-6 w-6 rounded-full transition-all"
-                style={{
-                  left: remindersEnabled ? 28 : 4,
-                  backgroundColor: remindersEnabled
-                    ? C.onPrimary
-                    : C.onSurfaceVariant,
-                }}
+            <label className="accessible-switch">
+              <input
+                type="checkbox"
+                aria-label="Ativar lembretes gentis"
+                checked={remindersEnabled}
+                onChange={(event) => setRemindersEnabled(event.target.checked)}
               />
-            </button>
+              <span
+                aria-hidden="true"
+                className="relative block h-8 w-14 rounded-full border transition-colors"
+                style={{
+                  backgroundColor: remindersEnabled
+                    ? C.primary
+                    : C.surfaceVariant,
+                  borderColor: remindersEnabled ? C.primary : C.outline,
+                }}
+              >
+                <span
+                  className="absolute top-1 h-6 w-6 rounded-full transition-all"
+                  style={{
+                    left: remindersEnabled ? 28 : 4,
+                    backgroundColor: remindersEnabled
+                      ? C.onPrimary
+                      : C.onSurfaceVariant,
+                  }}
+                />
+              </span>
+            </label>
           </div>
           <div
             className="my-4 border-t"
@@ -1370,7 +1507,9 @@ export default function App() {
                   <ListItem
                     key={i}
                     leading={
-                      <span className="text-2xl">{entry.food.emoji}</span>
+                      <span className="text-2xl" aria-hidden="true">
+                        {entry.food.emoji}
+                      </span>
                     }
                     headline={entry.food.name}
                     supporting={`${entry.meal} · ${entry.grams}g`}
@@ -1413,10 +1552,21 @@ export default function App() {
             />
             <ChevronLeft size={20} className="relative z-10" />
           </button>
-          <h2 className={`${T.titleLarge}`} style={{ color: C.onSurface }}>
+          <h1
+            tabIndex={-1}
+            className={`${T.titleLarge}`}
+            style={{ color: C.onSurface }}
+          >
             Buscar alimento
-          </h2>
+          </h1>
         </div>
+        <label
+          htmlFor="food-search"
+          className={`${T.labelMedium} mb-1 block`}
+          style={{ color: C.onSurfaceVariant }}
+        >
+          Buscar alimento por nome
+        </label>
         {/* MD3 Search bar — filled style, shape Extra Large */}
         <div
           className="relative flex items-center rounded-[28px] h-14 px-4 gap-3 focus-within:outline focus-within:outline-[3px] focus-within:outline-offset-2 focus-within:outline-[var(--md-primary)]"
@@ -1428,9 +1578,11 @@ export default function App() {
             className="flex-shrink-0"
           />
           <input
-            autoFocus
+            id="food-search"
+            name="food-search"
             type="text"
-            aria-label="Buscar alimento"
+            autoComplete="off"
+            aria-describedby="food-search-help food-search-status"
             placeholder="Busque por nome"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -1449,17 +1601,36 @@ export default function App() {
             </button>
           )}
         </div>
+        <p
+          id="food-search-help"
+          className={`${T.bodySmall} mt-2`}
+          style={{ color: C.onSurfaceVariant }}
+        >
+          Exemplo: arroz, banana ou frango.
+        </p>
+        <p
+          id="food-search-status"
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+        >
+          {query
+            ? filtered.length === 0
+              ? "Nenhum alimento encontrado."
+              : `${filtered.length} ${filtered.length === 1 ? "alimento encontrado" : "alimentos encontrados"}.`
+            : ""}
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         {query ? (
           <>
-            <h3
+            <h2
               className={`${T.titleSmall} mb-3`}
               style={{ color: C.onSurface }}
             >
               Resultados
-            </h3>
+            </h2>
             {filtered.length === 0 ? (
               <p
                 className={`${T.bodyMedium} text-center py-8`}
@@ -1483,12 +1654,12 @@ export default function App() {
           </>
         ) : (
           <>
-            <h3
+            <h2
               className={`${T.titleSmall} mb-3`}
               style={{ color: C.onSurface }}
             >
               Recentes
-            </h3>
+            </h2>
             <div className="space-y-1 mb-5">
               {RECENT.map((food, i) => (
                 <ListItem
@@ -1504,12 +1675,12 @@ export default function App() {
                 />
               ))}
             </div>
-            <h3
+            <h2
               className={`${T.titleSmall} mb-3`}
               style={{ color: C.onSurface }}
             >
               Todos os alimentos
-            </h3>
+            </h2>
             <div className="space-y-1">
               {FOOD_DB.map((food, i) => (
                 <FoodListItem
@@ -1546,9 +1717,13 @@ export default function App() {
           <ChevronLeft size={20} className="relative z-10" />
         </button>
         <div>
-          <h2 className={`${T.titleLarge}`} style={{ color: C.onSurface }}>
+          <h1
+            tabIndex={-1}
+            className={`${T.titleLarge}`}
+            style={{ color: C.onSurface }}
+          >
             {selFood.name}
-          </h2>
+          </h1>
           <p className={`${T.bodySmall}`} style={{ color: C.onSurfaceVariant }}>
             por 100 g
           </p>
@@ -1711,11 +1886,7 @@ export default function App() {
 
   // ── Screen: Confirmation ─────────────────────────────────────────────
   const Confirmation = (
-    <div
-      className="flex flex-col h-full items-center justify-center px-6 gap-6"
-      role="status"
-      aria-live="polite"
-    >
+    <div className="flex flex-col h-full items-center justify-center px-6 gap-6">
       {/* Success icon — MD3 uses a filled container */}
       <div
         className="w-24 h-24 rounded-full flex items-center justify-center"
@@ -1729,9 +1900,13 @@ export default function App() {
       </div>
 
       <div className="text-center">
-        <h2 className={`${T.headlineSmall}`} style={{ color: C.onSurface }}>
+        <h1
+          tabIndex={-1}
+          className={`${T.headlineSmall}`}
+          style={{ color: C.onSurface }}
+        >
           {confirmationUndone ? "Registro desfeito" : "Registrado!"}
-        </h2>
+        </h1>
         <p
           className={`${T.bodyMedium} mt-1`}
           style={{ color: C.onSurfaceVariant }}
@@ -1815,12 +1990,13 @@ export default function App() {
   const Progress = (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="px-4 pt-6 pb-2">
-        <h2
+        <h1
+          tabIndex={-1}
           className={`${T.headlineSmall} mb-1`}
           style={{ color: C.onSurface }}
         >
           Cálculo diário
-        </h2>
+        </h1>
         <p
           className={`${T.bodyMedium} mb-4`}
           style={{ color: C.onSurfaceVariant }}
@@ -1917,7 +2093,9 @@ export default function App() {
                 className="flex items-center gap-2 rounded-2xl p-2"
                 style={{ backgroundColor: C.surfaceContainerHighest }}
               >
-                <span className="text-xl">{food.emoji}</span>
+                <span className="text-xl" aria-hidden="true">
+                  {food.emoji}
+                </span>
                 <div>
                   <p
                     className={`${T.labelSmall}`}
@@ -2033,9 +2211,13 @@ export default function App() {
           <p className={`${T.bodySmall}`} style={{ color: C.onSurfaceVariant }}>
             Progresso
           </p>
-          <h2 className={`${T.titleLarge}`} style={{ color: C.onSurface }}>
+          <h1
+            tabIndex={-1}
+            className={`${T.titleLarge}`}
+            style={{ color: C.onSurface }}
+          >
             {detailMeal}
-          </h2>
+          </h1>
         </div>
       </div>
 
@@ -2075,7 +2257,9 @@ export default function App() {
                   <ListItem
                     key={i}
                     leading={
-                      <span className="text-2xl">{entry.food.emoji}</span>
+                      <span className="text-2xl" aria-hidden="true">
+                        {entry.food.emoji}
+                      </span>
                     }
                     headline={entry.food.name}
                     supporting={`${entry.grams}g · C${c.carbs}g P${c.protein}g G${c.fat}g`}
@@ -2151,12 +2335,13 @@ export default function App() {
         <p className={`${T.bodyMedium}`} style={{ color: C.onSurfaceVariant }}>
           Preferências do app
         </p>
-        <h2
+        <h1
+          tabIndex={-1}
           className={`${T.headlineSmall} mt-1`}
           style={{ color: C.onSurface }}
         >
           Configurações
-        </h2>
+        </h1>
       </header>
 
       <div
@@ -2190,12 +2375,11 @@ export default function App() {
         >
           Aparência
         </p>
-        <div
+        <fieldset
           className="grid grid-cols-2 gap-2 rounded-[24px] p-2"
           style={{ backgroundColor: C.surfaceContainerLow }}
-          role="radiogroup"
-          aria-label="Tema de cores"
         >
+          <legend className="sr-only">Tema de cores</legend>
           {(
             [
               ["light", "Claro", Sun],
@@ -2204,13 +2388,9 @@ export default function App() {
           ).map(([mode, label, Icon]) => {
             const selected = themeMode === mode;
             return (
-              <button
+              <label
                 key={mode}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => setThemeMode(mode)}
-                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-[18px] px-2 text-center transition-all"
+                className="accessible-choice flex min-h-24 flex-col items-center justify-center gap-2 rounded-[18px] px-2 text-center transition-all"
                 style={{
                   backgroundColor: selected
                     ? C.primaryContainer
@@ -2218,12 +2398,24 @@ export default function App() {
                   color: selected ? C.onPrimaryContainer : C.onSurfaceVariant,
                 }}
               >
-                <Icon size={22} strokeWidth={selected ? 2.4 : 1.8} />
+                <input
+                  type="radio"
+                  name="theme-mode"
+                  value={mode}
+                  aria-label={`Tema ${label.toLowerCase()}`}
+                  checked={selected}
+                  onChange={() => setThemeMode(mode)}
+                />
+                <Icon
+                  aria-hidden="true"
+                  size={22}
+                  strokeWidth={selected ? 2.4 : 1.8}
+                />
                 <span className={T.labelSmall}>{label}</span>
-              </button>
+              </label>
             );
           })}
-        </div>
+        </fieldset>
         <div
           className="mt-3 flex items-center justify-between rounded-[20px] p-4"
           style={{ backgroundColor: C.surfaceContainerLow }}
@@ -2242,28 +2434,32 @@ export default function App() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={highContrast}
-            aria-label="Alto contraste"
-            onClick={() => setHighContrast((enabled) => !enabled)}
-            className="relative h-8 w-14 rounded-full border transition-colors"
-            style={{
-              backgroundColor: highContrast ? C.primary : C.surfaceVariant,
-              borderColor: highContrast ? C.primary : C.outline,
-            }}
-          >
-            <span
-              className="absolute top-1 h-6 w-6 rounded-full transition-transform"
-              style={{
-                left: highContrast ? "calc(100% - 28px)" : "4px",
-                backgroundColor: highContrast
-                  ? C.onPrimary
-                  : C.onSurfaceVariant,
-              }}
+          <label className="accessible-switch">
+            <input
+              type="checkbox"
+              aria-label="Alto contraste"
+              checked={highContrast}
+              onChange={(event) => setHighContrast(event.target.checked)}
             />
-          </button>
+            <span
+              aria-hidden="true"
+              className="relative block h-8 w-14 rounded-full border transition-colors"
+              style={{
+                backgroundColor: highContrast ? C.primary : C.surfaceVariant,
+                borderColor: highContrast ? C.primary : C.outline,
+              }}
+            >
+              <span
+                className="absolute top-1 h-6 w-6 rounded-full transition-transform"
+                style={{
+                  left: highContrast ? "calc(100% - 28px)" : "4px",
+                  backgroundColor: highContrast
+                    ? C.onPrimary
+                    : C.onSurfaceVariant,
+                }}
+              />
+            </span>
+          </label>
         </div>
 
         <button
@@ -2278,7 +2474,10 @@ export default function App() {
             <p className={`${T.titleSmall}`} style={{ color: C.error }}>
               Sair da conta
             </p>
-            <p className={`${T.bodySmall}`} style={{ color: C.onSurfaceVariant }}>
+            <p
+              className={`${T.bodySmall}`}
+              style={{ color: C.onSurfaceVariant }}
+            >
               Encerrar sessão neste dispositivo
             </p>
           </div>
@@ -2301,7 +2500,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-[100svh] flex items-center justify-center sm:p-4"
+      className="app-viewport min-h-[100svh] flex items-center justify-center sm:p-4"
       style={{
         fontFamily: "'Roboto Flex', Roboto, sans-serif",
         backgroundColor: C.surfaceContainerHighest,
@@ -2309,22 +2508,35 @@ export default function App() {
     >
       {/* Adaptive compact scaffold: edge-to-edge on phones, floating pane on wider viewports. */}
       <div
-        className="relative flex flex-col overflow-hidden sm:rounded-[32px]"
+        className="app-shell relative flex flex-col overflow-hidden sm:rounded-[32px]"
         style={{
           width: "100%",
           maxWidth: 480,
-          height: "min(900px, 100svh)",
           backgroundColor: C.surface,
           boxShadow: elev[3],
         }}
       >
-        {/* Screen content */}
+        <a href="#main-content" className="skip-link">
+          Ir para o conteúdo
+        </a>
         <div
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {announcement}
+        </div>
+        {/* Screen content */}
+        <main
+          id="main-content"
+          ref={mainRef}
+          tabIndex={-1}
           className="flex-1 overflow-hidden flex flex-col"
           style={{ backgroundColor: C.surface }}
         >
           {screens[screen]}
-        </div>
+        </main>
 
         {/* MD3 Navigation Bar */}
         {screen !== "onboarding" && (
@@ -2354,7 +2566,9 @@ function FoodListItem({
         className="absolute inset-0 rounded-[16px] opacity-0 group-hover:opacity-[0.08] group-active:opacity-[0.12] transition-opacity"
         style={{ backgroundColor: C.onSurface }}
       />
-      <span className="text-2xl flex-shrink-0 relative z-10">{food.emoji}</span>
+      <span className="text-2xl flex-shrink-0 relative z-10" aria-hidden="true">
+        {food.emoji}
+      </span>
       <div className="flex-1 min-w-0 relative z-10">
         <p
           className="text-[16px] leading-6 font-normal tracking-[0.2px] truncate"
