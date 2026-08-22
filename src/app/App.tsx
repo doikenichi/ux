@@ -21,6 +21,7 @@ import {
   Bell,
   Copy,
   Undo2,
+  LogOut,
 } from "lucide-react";
 
 // ── MD3 Color System ─────────────────────────────────────────────────────
@@ -883,6 +884,13 @@ export default function App() {
     setProfile({ ...draftProfile, name: draftProfile.name.trim() });
     setAnnouncement("Perfil criado com sucesso.");
     setScreen("dashboard");
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("nutri-profile");
+    setProfile(null);
+    setActiveTab("home");
+    setScreen("onboarding");
   }
 
   const filtered =
@@ -2415,6 +2423,24 @@ export default function App() {
             </span>
           </label>
         </div>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="mt-3 flex w-full items-center gap-3 rounded-[20px] p-4 text-left transition-colors hover:opacity-90 active:opacity-80"
+          style={{ backgroundColor: C.surfaceContainerLow }}
+          aria-label="Sair da conta"
+        >
+          <LogOut size={22} style={{ color: C.error }} />
+          <div>
+            <p className={`${T.titleSmall}`} style={{ color: C.error }}>
+              Sair da conta
+            </p>
+            <p className={`${T.bodySmall}`} style={{ color: C.onSurfaceVariant }}>
+              Encerrar sessão neste dispositivo
+            </p>
+          </div>
+        </button>
       </section>
     </div>
   );
