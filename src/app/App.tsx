@@ -18,6 +18,9 @@ import {
   Sun,
   Moon,
   Contrast,
+  Bell,
+  Copy,
+  Undo2,
 } from "lucide-react";
 
 // ── MD3 Color System ─────────────────────────────────────────────────────
@@ -767,6 +770,12 @@ export default function App() {
   const [detailMeal, setDetailMeal] = useState<MealName>("Almoço");
   const [activeTab, setActiveTab] = useState<NavTab>("home");
   const [selectedMeals, setSelectedMeals] = useState<MealName[]>(MEALS);
+  const [lastAddedEntry, setLastAddedEntry] = useState<LogEntry | null>(null);
+  const [confirmationUndone, setConfirmationUndone] = useState(false);
+  const [remindersEnabled, setRemindersEnabled] = useState(
+    () => localStorage.getItem("nutri-reminders") === "true",
+  );
+  const [feedbackMessage, setFeedbackMessage] = useState("");
   const [draftProfile, setDraftProfile] = useState<Profile>({
     name: "",
     height: 170,
@@ -785,6 +794,10 @@ export default function App() {
   useEffect(() => {
     if (profile) localStorage.setItem("nutri-profile", JSON.stringify(profile));
   }, [profile]);
+
+  useEffect(() => {
+    localStorage.setItem("nutri-reminders", String(remindersEnabled));
+  }, [remindersEnabled]);
 
   const today = new Date();
   today.setDate(today.getDate() + dateOffset);
@@ -818,6 +831,7 @@ export default function App() {
     : DEFAULT_GOAL_KCAL;
   const selectedLog = log.filter((entry) => selectedMeals.includes(entry.meal));
   const selectedKcal = sumKcal(selectedLog);
+  const lastLoggedEntry = [...log].reverse()[0];
 
   function finishOnboarding() {
     if (
@@ -843,9 +857,49 @@ export default function App() {
   const preProtein = Math.round(selFood.protein * ratio * 10) / 10;
   const preFat = Math.round(selFood.fat * ratio * 10) / 10;
 
+  function selectFood(food: Food) {
+    const previousEntry = [...log]
+      .reverse()
+      .find((entry) => entry.food.name === food.name);
+    setSelFood(food);
+    setGrams(previousEntry?.grams ?? 100);
+    if (previousEntry) setSelMeal(previousEntry.meal);
+    setScreen("foodDetail");
+  }
+
   function addFood() {
-    setLog((prev) => [...prev, { food: selFood, grams, meal: selMeal }]);
+    const newEntry = { food: selFood, grams, meal: selMeal };
+    setLog((prev) => [...prev, newEntry]);
+    setLastAddedEntry(newEntry);
+    setConfirmationUndone(false);
+    setFeedbackMessage("");
     setScreen("confirmation");
+  }
+
+  function undoLastAddition() {
+    if (!lastAddedEntry) return;
+    setLog((prev) => prev.filter((entry) => entry !== lastAddedEntry));
+    setLastAddedEntry(null);
+    setConfirmationUndone(true);
+  }
+
+  function repeatLastMeal() {
+    const lastEntry = [...log].reverse()[0];
+    if (!lastEntry) return;
+    const entriesToRepeat = log.filter(
+      (entry) => entry.meal === lastEntry.meal,
+    );
+    setLog((prev) => [
+      ...prev,
+      ...entriesToRepeat.map((entry) => ({ ...entry })),
+    ]);
+    setSelMeal(lastEntry.meal);
+    setFeedbackMessage(
+      lastEntry.meal +
+        " repetido com " +
+        entriesToRepeat.length +
+        " alimentos.",
+    );
   }
 
   function removeEntry(entry: LogEntry) {
@@ -1163,6 +1217,108 @@ export default function App() {
         </ExtendedFAB>
       </div>
 
+      {/* Gentle shortcuts for lower-effort use */}
+      <div className="px-4 pb-4">
+        <OutlinedCard className="p-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: C.primaryContainer }}
+            >
+              <Bell size={20} style={{ color: C.onPrimaryContainer }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={`${T.titleSmall}`} style={{ color: C.onSurface }}>
+                Lembretes gentis
+              </p>
+              <p
+                className={`${T.bodySmall}`}
+                style={{ color: C.onSurfaceVariant }}
+              >
+                {remindersEnabled
+                  ? "Preferência ativada"
+                  : "Ative quando quiser"}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={remindersEnabled}
+              aria-label="Ativar lembretes gentis"
+              onClick={() => setRemindersEnabled((enabled) => !enabled)}
+              className="relative h-8 w-14 rounded-full transition-colors"
+              style={{
+                backgroundColor: remindersEnabled
+                  ? C.primary
+                  : C.surfaceVariant,
+              }}
+            >
+              <span
+                className="absolute top-1 h-6 w-6 rounded-full transition-all"
+                style={{
+                  left: remindersEnabled ? 28 : 4,
+                  backgroundColor: remindersEnabled
+                    ? C.onPrimary
+                    : C.onSurfaceVariant,
+                }}
+              />
+            </button>
+          </div>
+          <div
+            className="my-4 border-t"
+            style={{ borderColor: C.outlineVariant }}
+          />
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: C.secondaryContainer }}
+            >
+              <Copy size={20} style={{ color: C.onSecondaryContainer }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={`${T.titleSmall}`} style={{ color: C.onSurface }}>
+                Repetir última refeição
+              </p>
+              <p
+                className={`${T.bodySmall}`}
+                style={{ color: C.onSurfaceVariant }}
+              >
+                {lastLoggedEntry
+                  ? lastLoggedEntry.meal
+                  : "Nenhuma refeição registrada"}
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Repetir última refeição"
+              disabled={!lastLoggedEntry}
+              onClick={repeatLastMeal}
+              className="flex h-12 w-12 items-center justify-center rounded-full transition-all disabled:opacity-40"
+              style={{
+                backgroundColor: C.secondaryContainer,
+                color: C.onSecondaryContainer,
+              }}
+            >
+              <Copy size={19} />
+            </button>
+          </div>
+        </OutlinedCard>
+        {feedbackMessage && (
+          <div
+            className="mt-3 flex items-center gap-2 rounded-[16px] px-4 py-3"
+            style={{
+              backgroundColor: C.primaryContainer,
+              color: C.onPrimaryContainer,
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            <Check size={18} />
+            <span className={`${T.bodyMedium}`}>{feedbackMessage}</span>
+          </div>
+        )}
+      </div>
+
       {/* Assist chips — meal shortcuts */}
       <div className="px-4 pb-5">
         <h2 className={`${T.titleSmall} mb-2`} style={{ color: C.onSurface }}>
@@ -1310,9 +1466,7 @@ export default function App() {
                     key={i}
                     food={food}
                     onSelect={() => {
-                      setSelFood(food);
-                      setGrams(100);
-                      setScreen("foodDetail");
+                      selectFood(food);
                     }}
                   />
                 ))}
@@ -1337,9 +1491,7 @@ export default function App() {
                   headline={food.name}
                   supporting={`${food.kcal} kcal / 100g`}
                   onClick={() => {
-                    setSelFood(food);
-                    setGrams(100);
-                    setScreen("foodDetail");
+                    selectFood(food);
                   }}
                 />
               ))}
@@ -1356,9 +1508,7 @@ export default function App() {
                   key={i}
                   food={food}
                   onSelect={() => {
-                    setSelFood(food);
-                    setGrams(100);
-                    setScreen("foodDetail");
+                    selectFood(food);
                   }}
                 />
               ))}
@@ -1572,16 +1722,32 @@ export default function App() {
 
       <div className="text-center">
         <h2 className={`${T.headlineSmall}`} style={{ color: C.onSurface }}>
-          Registrado!
+          {confirmationUndone ? "Registro desfeito" : "Registrado!"}
         </h2>
         <p
           className={`${T.bodyMedium} mt-1`}
           style={{ color: C.onSurfaceVariant }}
         >
-          <span style={{ color: C.onSurface }}>{selFood.name}</span> adicionado
-          ao {selMeal.toLowerCase()}
+          {confirmationUndone ? (
+            "O alimento foi removido do seu dia."
+          ) : (
+            <>
+              <span style={{ color: C.onSurface }}>{selFood.name}</span>{" "}
+              adicionado ao {selMeal.toLowerCase()}
+            </>
+          )}
         </p>
       </div>
+
+      {!confirmationUndone && lastAddedEntry && (
+        <TonalButton
+          onClick={undoLastAddition}
+          fullWidth
+          icon={<Undo2 size={18} />}
+        >
+          Desfazer registro
+        </TonalButton>
+      )}
 
       {/* Filled card — updated total */}
       <FilledCard className="w-full p-5 text-center">
