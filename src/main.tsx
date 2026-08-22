@@ -4,7 +4,7 @@
   import ScreenReaderSim from "./app/devtools/ScreenReaderSim.tsx";
   import "./styles/index.css";
 
-  // ScreenReaderSim só renderiza algo com ?a11y=1 na URL.
+  // ScreenReaderSim fica ativo por padrão; ?a11y=0 na URL o desliga.
   createRoot(document.getElementById("root")!).render(
     <>
       <App />
